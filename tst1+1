@@ -1,41 +1,63 @@
 #!/bin/sh
 
+# Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
+Nit=1
+
+case $# in
+  1) ;;
+   *) echo "Usage: `basename $0` flag"
+      echo " Check restart: compare 1 run of 2 x $Nit it long"
+      echo "     with 2 consecutive runs of $Nit it long each"
+      echo " where: flag = 1 -> do the 3 run"
+      echo "        flag = 2 -> compare std_outp"
+      echo "        flag = 3 -> compare pickup files"
+      exit ;;
+esac
+flag=$1
+
+
 #- input : 
-# 1) data.tst = parameter file "data" for 2 iter run
+# 1) data.tst = parameter file "data" for 2.Nit iter run
 # 2) in dir temp : pickup(_cd).0..0{num0}.001.001.data
 
-#- works only when start from iter that is a multiple of 10.
-num0="3600"
+num0="72030"
 
-exec=mitgcmuv
-# list of pickup needed for a restart :
-#listP='pickup pickup_cd'
-listP='pickup pickup_ic'
+gcmExc=mitgcmuv
+# list of pickup(s) that are needed for a restart :
+listP='pickup'
+#listP='pickup pickup_ic'
 
 #- dir where to put the results :
 dir1=res_2it
 dir2=res_1iA
 dir3=res_1iB
 #---------------------------
-rm -r $dir1 $dir2 $dir3
-mkdir $dir1 $dir2 $dir3
-num1=`expr $num0 + 1`
-num2=`expr $num0 + 2`
+Dbl=`expr $Nit + $Nit`
+num1=`expr $num0 + $Nit`
+num2=`expr $num0 + $Dbl`
 num0c=`add0upto10c $num0`
 num1c=`add0upto10c $num1`
 num2c=`add0upto10c $num2`
 echo $num0 $num1 $num2
 echo $num0c $num1c $num2c 
-echo 'exec='$exec
+echo 'gcmExc='$gcmExc
 # exit
 #------------------------
+
+if test $flag = 1 ; then
+#------------
+rm -r $dir1 $dir2 $dir3
+mkdir $dir1 $dir2 $dir3
+
 cp -p data.tst data
 ln -s temp/pickup*.${num0c}* .
-echo '==> START RUN 2it' 
-./$exec > std_outp.2it 2>&1
-out=`egrep -c 'STOP ABNORMAL END' std_outp.2it`
+echo '==> START RUN 2 x' $Nit 'it'
+./$gcmExc > std_outp.2it 2>&1
+if test -f pickup.ckptA.001.001.data 
+then out=`egrep -c 'STOP ABNORMAL END' std_outp.2it`
+else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 2it STOP before END => exit' ; exit ; fi
-echo '==>  END  RUN 2it'
+echo '==>  END  RUN 2 x' $Nit 'it'
 for xx in $listP
 do
  rnp $xx.ckptA $xx.$num2c
@@ -43,10 +65,12 @@ done
 mv *.00?.00?.* $dir1
 mv $dir1/pickup*.${num0c}* .
 #--
-sed 's/^ nTimeSteps=2/ nTimeSteps=1/g' data.tst > data
+sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
 echo '==> START RUN 1iA' 
-./$exec > std_outp.1iA 2>&1
-out=`egrep -c 'STOP ABNORMAL END' std_outp.1iA`
+./$gcmExc > std_outp.1iA 2>&1
+if test -f pickup.ckptA.001.001.data 
+then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iA`
+else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 1iA STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iA'
 for xx in $listP
@@ -60,8 +84,10 @@ ln -s $dir2/pickup*.$num1c.* .
 mv data data.tmp
 sed "s/^ nIter0=$num0/ nIter0=$num1/g" data.tmp > data
 echo '==> START RUN 1iB' 
-./$exec > std_outp.1iB 2>&1
-out=`egrep -c 'STOP ABNORMAL END' std_outp.1iB`
+./$gcmExc > std_outp.1iB 2>&1
+if test -f pickup.ckptA.001.001.data 
+then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iB`
+else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 1iB STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iB'
 for xx in $listP
@@ -70,7 +96,12 @@ do
 done
 mv *.00?.00?.* $dir3
 rm $dir3/pickup*.$num1c.*
-#--
+exit
+#------------
+fi
+
+if test $flag = 2 ; then
+#------------
 echo ' ' ; echo '-- compare cg2d_init_res :'
 echo ' run 1iA:'
  grep "cg2d_init_res" std_outp.1iA \
@@ -82,3 +113,16 @@ echo ' run 2it:'
  grep "cg2d_init_res" std_outp.2it \
       | sed 's/.* cg2d_init_res =//' 
 exit
+#------------
+fi
+
+if test $flag = 3 ; then
+#------------
+difex=`ls ~jmc/bin/dif6data`
+for xx in $listP
+do
+ $difex $dir1 $dir3 $xx.$num2c
+done
+exit
+#------------
+fi
