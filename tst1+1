@@ -1,7 +1,9 @@
 #!/bin/sh
 
 # Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
-Nit=2
+Dbl=`sed -n 's/nTimeSteps=//p' data.tst | sed 's/,//g'`
+Nit=`expr $Dbl / 2`
+#Nit=2
 
 case $# in
   1) ;;
@@ -20,12 +22,13 @@ flag=$1
 # 1) data.tst = parameter file "data" for 2.Nit iter run
 # 2) in dir temp : pickup(_cd).0..0{num0}.001.001.data
 
-num0="72000"
+num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
+#num0="72000"
 
 gcmExc=mitgcmuv
 # list of pickup(s) that are needed for a restart :
 listP='pickup'
-#listP='pickup pickup_ic'
+#listP='pickup pickup_cd'
 
 #- dir where to put the results :
 dir1=res_2it
@@ -60,7 +63,7 @@ if test $out != 0 ; then echo 'RUN 2it STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 2 x' $Nit 'it'
 for xx in $listP
 do
- rnp $xx.ckptA $xx.$num2c
+ rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
 mv $dir1/pickup*.${num0c}* .
@@ -75,7 +78,7 @@ if test $out != 0 ; then echo 'RUN 1iA STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iA'
 for xx in $listP
 do
- rnp $xx.ckptA $xx.$num1c
+ rnp -s $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
 rm $dir2/pickup*.${num0c}*
@@ -92,7 +95,7 @@ if test $out != 0 ; then echo 'RUN 1iB STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iB'
 for xx in $listP
 do
- rnp $xx.ckptA $xx.$num2c
+ rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
 rm $dir3/pickup*.$num1c.*
@@ -118,7 +121,7 @@ fi
 
 if test $flag = 3 ; then
 #------------
-difex=`ls ~jmc/bin/dif6data`
+difex=`ls ~jmc/bin/dif_data`
 for xx in $listP
 do
  $difex $dir1 $dir3 $xx.$num2c

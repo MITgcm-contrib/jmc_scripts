@@ -1,10 +1,13 @@
 #! /bin/sh
 case $# in
-  2|3) ;;
-    *) echo "Usage: `basename $0` [Dir] old_prefx new_prefx [prefx_selecteur]"
+  2|3|4|5) ;;
+    *) echo "Usage: `basename $0` [-s] [Dir] old_prefx new_prefx [prefx_selecteur]"
+       echo " -s : silent mode"
+       echo "Dir : move directories"
        exit ;;
 esac
-cmd='ls' ; opt='-f'
+cmd='ls' ; opt='-f' ;
+if test $1 = '-s' ; then verb=0 ; shift ; else verb=1 ; fi
 if test $1 = 'Dir' ; then cmd='ls -d' ; opt='-d' ; shift ; fi
 rac=$1
 new=$2
@@ -19,7 +22,10 @@ do
   sufx=`echo $xx | sed "s/^$sel//g"` 
   #echo $sufx
   if test $opt $rac$sufx 
-  then echo mv $rac$sufx $new$sufx ; mv -i $rac$sufx $new$sufx
+  then 
+       if test $verb = 1 
+       then echo mv $rac$sufx $new$sufx ; fi
+              mv -i $rac$sufx $new$sufx
   else echo pas de fichier $rac$sufx
   fi
 done
