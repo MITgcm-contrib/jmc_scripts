@@ -1,0 +1,120 @@
+#!/bin/csh
+#
+# Example PBS script to run a job on the myrinet-3 cluster.
+# The lines beginning #PBS set various queuing parameters.
+#
+# o -N Job Name
+#PBS -N oce_1
+#
+#
+# o -l resource lists that control where job goes
+#      here we ask for 3 nodes, each with the attribute "p4".
+#PBS -l nodes=4:p4
+#
+# o Where to write output
+# #PBS -e TTT.err 
+
+# #PBS -o TTT.out
+
+#
+# o Export all my environment variables to the job
+#PBS -V
+#
+
+echo 'start'
+#-------------------
+set namPBS=oce_1
+set runDir=$SC6/oce_glob/run_1
+set r2nDir=$SC6/oce_glob/run00
+set executable=mitgcmuv.ifc+mpi
+set nit1mn=1800
+set endRun=100
+set partmn=25
+#-------------------
+# echo 'run in dir :' $runDir
+set prc2='N'
+cd $runDir
+
+set its=`egrep 'nIter0' data | sed 's/ nIter0=//'| sed 's/,$//'`
+set nms=`expr $its / $nit1mn`
+set nMs = `/home/jmc/bin/add0upto3c $nms`
+set nme=`expr $nms + $partmn`
+set nMe = `/home/jmc/bin/add0upto3c $nme`
+set ite=`expr $nme \* $nit1mn`
+
+set numPBS=`echo $PBS_NODEFILE | sed 's/\/usr\/spool\/PBS\/aux\///g'| sed 's/\.cg01//g'`
+touch move_TTT_files
+echo mv $namPBS.o$numPBS TTT.out.$nMe >> move_TTT_files
+echo mv $namPBS.e$numPBS TTT.err.$nMe >> move_TTT_files
+
+#----------------------------------------------
+echo $PBS_NODEFILE
+cat  $PBS_NODEFILE
+echo 'The list above shows the nodes this job has exclusive access to.'
+echo 'The list can be found in the file named in the variable $PBS_NODEFILE'
+
+rm -f run_here
+date > run_here
+cat $PBS_NODEFILE >> run_here
+echo 'PBS job Number:' $numPBS >> run_here
+echo on `hostname` run $executable 'in dir:' $runDir >> run_here
+
+if ( $nms >= $endRun ) then
+ echo 'Run already finished : month' $nms
+ exit 9
+endif
+
+echo on `hostname` run $executable 'in dir:' `pwd`
+echo 'start at month=' $nMs '(it=' $its '), run until mn=' $nMe '(it=' $ite ')'
+echo 'start at month=' $nms '(it=' $its '), run until mn=' $nme '(it=' $ite ')'>> run_here
+
+#-------------------
+if ( -f $r2nDir/IamReady ) then
+ set prc2=`sed -n '2 p' $PBS_NODEFILE`
+ echo send 2nd job on $prc2
+ rsh $prc2 $r2nDir/runscript >& $r2nDir/TTT.out2.$nMe &
+else
+ echo 'no file dir_run_2/IamReady => no 2nd run.'
+endif
+#-------------------
+
+#cp -p run_here std_outp
+#echo ' ' >> std_outp
+# ./$executable >>& std_outp
+
+cat $PBS_NODEFILE > mf
+set ncpus = ( `wc -l mf | awk '{print $1}'` )
+/usr/local/pkg/mpi/mpi-1.2.4..8a-gm-1.5/intel/bin/mpirun.ch_gm -machinefile mf --gm-kill 5 -v -np $ncpus ./$executable
+set out=$?
+echo 'end with status' $out
+
+set iTe = `/home/jmc/bin/add0upto10c $ite`
+if ( -f pickup.$iTe.001.001.data ) then
+ set out=0
+else
+ set out=1
+endif
+
+echo 'end with status' $out
+
+if ( $out != 0 ) then
+ echo 'bad return status => STOP here'
+else 
+#mv std_outp std_outp.$nMe
+ cp -p run_here std_outp.$nMe
+ echo ' ' >> std_outp.$nMe
+ cat  STDOUT.0000 >> std_outp.$nMe
+ mv -f STDOUT.000? STDERR.000? temp
+#- prepare new submission :
+ sed "s/ nIter0=$its/ nIter0=$ite/" data > TTT.tmp
+ mv TTT.tmp data
+endif
+
+if ( $out == 0 ) then
+ if ( $nme >= $endRun ) then
+   echo 'Run finished : month' $nme 'done !'
+ else
+  qsub runScript
+ endif
+endif
+exit $out

@@ -1,0 +1,26 @@
+#! /bin/sh
+case $# in
+  2|3) ;;
+    *) echo "Usage: `basename $0` [Dir] old_prefx new_prefx [prefx_selecteur]"
+       exit ;;
+esac
+cmd='ls' ; opt='-f'
+if test $1 = 'Dir' ; then cmd='ls -d' ; opt='-d' ; shift ; fi
+rac=$1
+new=$2
+if test $rac = '=' ; then rac='' ; fi
+if test $new = '=' ; then new='' ; fi
+if test $# = "3" ; then sel=$3 ; else sel=$rac ; fi
+#---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+liste=`$cmd ${sel}*`
+#echo $liste ; exit
+for xx in $liste
+do
+  sufx=`echo $xx | sed "s/^$sel//g"` 
+  #echo $sufx
+  if test $opt $rac$sufx 
+  then echo mv $rac$sufx $new$sufx ; mv -i $rac$sufx $new$sufx
+  else echo pas de fichier $rac$sufx
+  fi
+done
+exit

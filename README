@@ -1,0 +1,21 @@
+Some basic scripts are gather here. 
+They are not specially design to be general and obviously 
+need to be modified/customized for each application.
+
+a) the restart test : "1+1=2"
+script: tst1+1
+ call 2 shorts scripts: rnp & add0upto10c
+
+* no input argument but few comments within the file tst1+1
+  (needs to be edited and modify).
+* an example of data.tst file is provided 
+Note: the script is sensitive to space and upper-case / lower
+  case characters regarding nIter0 line and nTimeSteps line.
+
+b) PBS-batch script that re-submit itself (loop).
+script: runScript
+ call 2 shorts scripts: add0upto3c & add0upto10c
+
+* used (and tested) on myrinet-3 cluster.
+* suffer from a lack of meaningful comments.
+  
