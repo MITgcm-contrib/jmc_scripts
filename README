@@ -19,3 +19,9 @@ script: runScript
 * used (and tested) on myrinet-3 cluster.
 * suffer from a lack of meaningful comments.
   
+c) A short script to split the ASCII Diagnostics-Stats output file
+   into separated files (one per field) that are easy to read/load 
+   (e.g., in matlab, just use "load" command)
+script: extract_StD
+ no known dependency
+

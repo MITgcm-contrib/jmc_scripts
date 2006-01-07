@@ -1,0 +1,67 @@
+#!/bin/sh
+case $# in
+  0|1) echo "Usage: `basename $0` input_fil outp_sufix [field_name_list]"
+       echo "   from ASCII Diagnostics-Stats file (=input_fil) and for each field"
+       echo "   (in field_name_list), extract the associated numerical values and"
+       echo "   put them in a separated file: stDiag_{VAR}.{outp_sufix}"
+       exit 9 ;;
+    2) listV='T' ;;
+    *) ;;
+esac
+
+inpFil=$1
+#outFil=$2
+sufx=$2
+tmpFil='TTT.'$$
+if test $# = '2'
+then listV='T'
+else
+ shift; shift; listV=$*
+fi
+echo $inpFil $sufx $listV $tmpFil
+grep '^# Fields ' $inpFil
+
+for vv in $listV
+do
+ outFil='stDiag_'$vv.$sufx
+ case $vv in
+   'Eta') var='ETAN';;
+   'Et2') var='ETANSQ';;
+     'T') var='THETA';;
+     'S') var='SALT' ;;
+     'U') var='UVEL' ;;
+     'V') var='VVEL' ;;
+     'W') var='WVEL' ;;
+    'U2') var='UVELSQ' ;;
+    'V2') var='VVELSQ' ;;
+       *)  var=$vv ;;
+ esac
+#echo 'grep -m 1' "^ field : ${var} " $inpFil
+#grep -m 1 "^ field : ${var} " $inpFil
+ nLev=`grep -m 1 "^ field : ${var} " $inpFil | sed 's/.*=//'`
+ if test ${nLev}'xx' = 'xx'
+ then
+  echo 'WARNING variable:' $var 'not found in file' $inpFil
+ else
+  echo 'extract variable:' $var ', outFil=' $outFil
+#echo 'nLev=' $nLev
+#- echo set of sed instruction to file sedFil :
+  sedFil=$tmpFil.$vv
+  rm -f $sedFil
+  echo "/^ field : $var /{" > $sedFil
+  if test $nLev = 1 ; then k=0 ; else k=-1 ; fi
+  while [ $k -le $nLev ]
+  do 
+   echo "N" >> $sedFil
+   k=`expr $k + 1`
+  done
+  echo "p" >> $sedFil
+  echo "}" >> $sedFil
+#- extract records of variable "var" using sed command & sedFil
+  sed -n -f $sedFil $inpFil > $tmpFil
+  head -1 $tmpFil
+  sed '/^ k /d' $tmpFil | sed '/^ field /d' > $outFil 
+  rm -f $sedFil $tmpFil
+ fi
+done
+exit
