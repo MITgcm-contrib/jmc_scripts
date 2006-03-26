@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# $Header:  $
+# $Name:  $
+
 # Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
 Dbl=`sed -n 's/nTimeSteps=//p' data.tst | sed 's/,//g'`
 Nit=`expr $Dbl / 2`
@@ -26,7 +29,7 @@ num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 
 # list of pickup(s) that are needed for a restart :
 listP='pickup'
-#listP='pickup pickup_cd pickup_nh'
+#listP='pickup pickup_cd pickup_nh pickup_ic pickup_land'
 
 mpi=0
 if [ $mpi -ge 1 ]
@@ -77,6 +80,7 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
+mv R?.data R?.meta DR?.data DR?.meta $dir1
 mv $dir1/pickup*.${num0c}* .
 #--
 sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
@@ -95,6 +99,7 @@ do
  rnp -s $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
+mv R?.data R?.meta DR?.data DR?.meta $dir2
 rm $dir2/pickup*.${num0c}*
 #--
 ln -s $dir2/pickup*.$num1c.* .
@@ -115,6 +120,7 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
+mv R?.data R?.meta DR?.data DR?.meta $dir3
 rm $dir3/pickup*.$num1c.*
 exit
 #------------
