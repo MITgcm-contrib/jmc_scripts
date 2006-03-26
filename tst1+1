@@ -17,23 +17,31 @@ case $# in
 esac
 flag=$1
 
-
-#- input : 
+#- input :
 # 1) data.tst = parameter file "data" for 2.Nit iter run
 # 2) in dir temp : pickup(_cd).0..0{num0}.001.001.data
 
 num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 #num0="72000"
 
-gcmExc=mitgcmuv
 # list of pickup(s) that are needed for a restart :
 listP='pickup'
-#listP='pickup pickup_cd'
+#listP='pickup pickup_cd pickup_nh'
+
+mpi=0
+if [ $mpi -ge 1 ]
+then gcmExc=run_ifc_mpi
+else gcmExc=mitgcmuv
+fi
 
 #- dir where to put the results :
 dir1=res_2it
 dir2=res_1iA
 dir3=res_1iB
+
+#make sure that local dir is in the path:
+export PATH=${PATH}:.
+
 #---------------------------
 Dbl=`expr $Nit + $Nit`
 num1=`expr $num0 + $Nit`
@@ -42,7 +50,7 @@ num0c=`add0upto10c $num0`
 num1c=`add0upto10c $num1`
 num2c=`add0upto10c $num2`
 echo $num0 $num1 $num2
-echo $num0c $num1c $num2c 
+echo $num0c $num1c $num2c
 echo 'gcmExc='$gcmExc
 # exit
 #------------------------
@@ -55,8 +63,11 @@ mkdir $dir1 $dir2 $dir3
 cp -p data.tst data
 ln -s temp/pickup*.${num0c}* .
 echo '==> START RUN 2 x' $Nit 'it'
-./$gcmExc > std_outp.2it 2>&1
-if test -f pickup.ckptA.001.001.data 
+if [ $mpi -ge 1 ]
+then ./$gcmExc std_outp.2it > TTT.out.2it 2>&1
+else ./$gcmExc > std_outp.2it 2>&1
+fi
+if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.2it`
 else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 2it STOP before END => exit' ; exit ; fi
@@ -69,9 +80,12 @@ mv *.0??.0??.* $dir1
 mv $dir1/pickup*.${num0c}* .
 #--
 sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
-echo '==> START RUN 1iA' 
-./$gcmExc > std_outp.1iA 2>&1
-if test -f pickup.ckptA.001.001.data 
+echo '==> START RUN 1iA'
+if [ $mpi -ge 1 ]
+then ./$gcmExc std_outp.1iA > TTT.out.1iA 2>&1
+else ./$gcmExc > std_outp.1iA 2>&1
+fi
+if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iA`
 else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 1iA STOP before END => exit' ; exit ; fi
@@ -83,12 +97,15 @@ done
 mv *.0??.0??.* $dir2
 rm $dir2/pickup*.${num0c}*
 #--
-ln -s $dir2/pickup*.$num1c.* . 
+ln -s $dir2/pickup*.$num1c.* .
 mv data data.tmp
 sed "s/^ nIter0=$num0/ nIter0=$num1/g" data.tmp > data
-echo '==> START RUN 1iB' 
-./$gcmExc > std_outp.1iB 2>&1
-if test -f pickup.ckptA.001.001.data 
+echo '==> START RUN 1iB'
+if [ $mpi -ge 1 ]
+then ./$gcmExc std_outp.1iB > TTT.out.1iB 2>&1
+else ./$gcmExc > std_outp.1iB 2>&1
+fi
+if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iB`
 else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 1iB STOP before END => exit' ; exit ; fi
@@ -114,7 +131,7 @@ echo ' run 1iB:'
       | sed 's/.* cg2d_init_res =//'
 echo ' run 2it:'
  grep "cg2d_init_res" std_outp.2it \
-      | sed 's/.* cg2d_init_res =//' 
+      | sed 's/.* cg2d_init_res =//'
 exit
 #------------
 fi

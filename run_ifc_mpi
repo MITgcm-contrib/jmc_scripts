@@ -1,0 +1,24 @@
+#!/bin/bash
+
+ncpus=`wc -l mf | awk '{print $1}'`
+gcmExe=mitgcmuv.if${ncpus}
+
+# to run "testreport" on myrinet cluster, N cpu MPI run:
+# myrinet-4-19{verification}% cat $PBS_NODEFILE > mf
+# myrinet-4-19{verification}% ./run_ifc_mpi
+
+cmd="/usr/local/pkg/mpi/mpi-1.2.4..8a-gm-1.5/intel/bin/mpirun.ch_gm -machinefile mf --gm-kill 5 -v -np $ncpus $gcmExe"
+
+date
+echo 'execute command line:'
+echo $cmd
+
+$cmd
+
+date
+
+if test $# = 1
+then  mv STDOUT.0000  $1
+echo 'mv STDOUT.0000' $1
+fi
+
