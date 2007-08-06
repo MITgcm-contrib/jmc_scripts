@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header:  $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.6 2006/03/26 23:21:50 jmc Exp $
 # $Name:  $
 
 # Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
@@ -28,8 +28,8 @@ num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 #num0="72000"
 
 # list of pickup(s) that are needed for a restart :
+#listP='pickup pickup_cd pickup_nh pickup_ic pickup_land pickup_seaice'
 listP='pickup'
-#listP='pickup pickup_cd pickup_nh pickup_ic pickup_land'
 
 mpi=0
 if [ $mpi -ge 1 ]
@@ -64,7 +64,8 @@ rm -r $dir1 $dir2 $dir3
 mkdir $dir1 $dir2 $dir3
 
 cp -p data.tst data
-ln -s temp/pickup*.${num0c}* .
+numF=`ls temp/pickup*.${num0c}* 2> /dev/null | grep -c pickup`
+if test $numF != 0 ; then ln -s temp/pickup*.${num0c}* . ; fi
 echo '==> START RUN 2 x' $Nit 'it'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.2it > TTT.out.2it 2>&1
@@ -80,7 +81,7 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
-mv R?.data R?.meta DR?.data DR?.meta $dir1
+mv R?.data R?.meta DR?.data DR?.meta *.txt $dir1
 mv $dir1/pickup*.${num0c}* .
 #--
 sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
@@ -99,7 +100,7 @@ do
  rnp -s $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
-mv R?.data R?.meta DR?.data DR?.meta $dir2
+mv R?.data R?.meta DR?.data DR?.meta *.txt $dir2
 rm $dir2/pickup*.${num0c}*
 #--
 ln -s $dir2/pickup*.$num1c.* .
@@ -120,7 +121,7 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
-mv R?.data R?.meta DR?.data DR?.meta $dir3
+mv R?.data R?.meta DR?.data DR?.meta *.txt $dir3
 rm $dir3/pickup*.$num1c.*
 exit
 #------------
