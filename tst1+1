@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.6 2006/03/26 23:21:50 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.7 2007/08/06 22:57:57 jmc Exp $
 # $Name:  $
 
 # Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
@@ -81,7 +81,8 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
-mv R?.data R?.meta DR?.data DR?.meta *.txt $dir1
+txtF=`ls -1 *.txt 2> /dev/null`
+mv R?.data R?.meta DR?.data DR?.meta $txtF $dir1
 mv $dir1/pickup*.${num0c}* .
 #--
 sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
@@ -100,7 +101,8 @@ do
  rnp -s $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
-mv R?.data R?.meta DR?.data DR?.meta *.txt $dir2
+txtF=`ls -1 *.txt 2> /dev/null`
+mv R?.data R?.meta DR?.data DR?.meta $txtF $dir2
 rm $dir2/pickup*.${num0c}*
 #--
 ln -s $dir2/pickup*.$num1c.* .
@@ -121,7 +123,8 @@ do
  rnp -s $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
-mv R?.data R?.meta DR?.data DR?.meta *.txt $dir3
+txtF=`ls -1 *.txt 2> /dev/null`
+mv R?.data R?.meta DR?.data DR?.meta $txtF $dir3
 rm $dir3/pickup*.$num1c.*
 exit
 #------------
