@@ -29,7 +29,6 @@ num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 
 # list of pickup(s) that are needed for a restart :
 #listP='pickup pickup_cd pickup_nh pickup_ic pickup_land pickup_seaice'
-listP='pickup'
 
 mpi=0
 if [ $mpi -ge 1 ]
@@ -60,8 +59,15 @@ echo 'gcmExc='$gcmExc
 
 if test $flag = 1 ; then
 #------------
-rm -r $dir1 $dir2 $dir3
+if test -d $dir1 -o -d $dir2 -o  -d $dir3
+then echo -n 'remove dir: '
+ if test -d $dir1 ; then echo -n $dir1 ' , ' ; rm -r $dir1 ; fi
+ if test -d $dir2 ; then echo -n $dir2 ' , ' ; rm -r $dir2 ; fi
+ if test -d $dir3 ; then echo -n $dir3 ' , ' ; rm -r $dir3 ; fi
+ echo ' '
+fi
 mkdir $dir1 $dir2 $dir3
+rm -f STDERR.0000
 
 cp -p data.tst data
 numF=`ls temp/pickup*.${num0c}* 2> /dev/null | grep -c pickup`
@@ -69,13 +75,16 @@ if test $numF != 0 ; then ln -s temp/pickup*.${num0c}* . ; fi
 echo '==> START RUN 2 x' $Nit 'it'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.2it > TTT.out.2it 2>&1
-else ./$gcmExc > std_outp.2it 2>&1
+else ./$gcmExc > std_outp.2it
 fi
+mv STDERR.0000 std__err.2it
 if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.2it`
 else out=9 ; fi
 if test $out != 0 ; then echo 'RUN 2it STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 2 x' $Nit 'it'
+listP=`ls pickup*.ckptA* | sed 's/\..*//g' | uniq`
+echo ' listP=' $listP
 for xx in $listP
 do
  rnp -s $xx.ckptA $xx.$num2c
@@ -83,14 +92,16 @@ done
 mv *.0??.0??.* $dir1
 txtF=`ls -1 *.txt 2> /dev/null`
 mv R?.data R?.meta DR?.data DR?.meta $txtF $dir1
-mv $dir1/pickup*.${num0c}* .
+listS=`ls $dir1/pickup*.${num0c}* 2> /dev/null | head -1`
+if test "x$listS" != x ; then mv $dir1/pickup*.${num0c}* . ; fi
 #--
 sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" data.tst > data
 echo '==> START RUN 1iA'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.1iA > TTT.out.1iA 2>&1
-else ./$gcmExc > std_outp.1iA 2>&1
+else ./$gcmExc > std_outp.1iA
 fi
+mv STDERR.0000 std__err.1iA
 if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iA`
 else out=9 ; fi
@@ -103,7 +114,8 @@ done
 mv *.0??.0??.* $dir2
 txtF=`ls -1 *.txt 2> /dev/null`
 mv R?.data R?.meta DR?.data DR?.meta $txtF $dir2
-rm $dir2/pickup*.${num0c}*
+listS=`ls $dir2/pickup*.${num0c}* 2> /dev/null | head -1`
+if test "x$listS" != x ; then rm $dir1/pickup*.${num0c}* . ; fi
 #--
 ln -s $dir2/pickup*.$num1c.* .
 mv data data.tmp
@@ -111,8 +123,9 @@ sed "s/^ nIter0=$num0/ nIter0=$num1/g" data.tmp > data
 echo '==> START RUN 1iB'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.1iB > TTT.out.1iB 2>&1
-else ./$gcmExc > std_outp.1iB 2>&1
+else ./$gcmExc > std_outp.1iB
 fi
+mv STDERR.0000 std__err.1iB
 if test -f pickup.ckptA.001.001.data
 then out=`egrep -c 'STOP ABNORMAL END' std_outp.1iB`
 else out=9 ; fi
@@ -149,6 +162,7 @@ fi
 if test $flag = 3 ; then
 #------------
 difex=`ls ~jmc/bin/dif_data`
+listP=`( cd $dir1 ; ls pickup*.$num2c* | sed 's/\..*//g' | uniq )`
 for xx in $listP
 do
  $difex $dir1 $dir3 $xx.$num2c
