@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.7 2007/08/06 22:57:57 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.9 2007/10/24 16:14:28 jmc Exp $
 # $Name:  $
 
 # Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
@@ -115,11 +115,11 @@ mv *.0??.0??.* $dir2
 txtF=`ls -1 *.txt 2> /dev/null`
 mv R?.data R?.meta DR?.data DR?.meta $txtF $dir2
 listS=`ls $dir2/pickup*.${num0c}* 2> /dev/null | head -1`
-if test "x$listS" != x ; then rm $dir1/pickup*.${num0c}* . ; fi
+if test "x$listS" != x ; then rm $dir2/pickup*.${num0c}* ; fi
 #--
 ln -s $dir2/pickup*.$num1c.* .
-mv data data.tmp
-sed "s/^ nIter0=$num0/ nIter0=$num1/g" data.tmp > data
+sed "s/^ nIter0=$num0/ nIter0=$num1/g" data > data.tmp
+mv -f data.tmp data
 echo '==> START RUN 1iB'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.1iB > TTT.out.1iB 2>&1
