@@ -1,0 +1,284 @@
+#!/bin/sh
+
+noc0=`sed -n 's/nIter0=//p' input_ocn/data.tst | sed 's/,//g' | sed 's/ //g'`
+Dbl=`sed -n 's/nTimeSteps=//p' input_ocn/data.tst | sed 's/,//g'`
+NiOc=`expr $Dbl / 2`
+nat0=`sed -n 's/nIter0=//p' input_atm/data.tst | sed 's/,//g' | sed 's/ //g'`
+Dbl=`sed -n 's/nTimeSteps=//p' input_atm/data.tst | sed 's/,//g'`
+NiAt=`expr $Dbl / 2`
+
+Nit=$NiOc
+case $# in
+  1) ;;
+   *) echo "Usage: `basename $0` flag"
+      echo " Check restart of coupled set-up: compare 1 run of 2 x $Nit it long"
+      echo "                       with 2 consecutive runs of $Nit it long each"
+      echo " where: flag = 0 -> prepare for 1rst run"
+      echo "        flag = 1 -> move res. after 1rst run & prepare for 2nd"
+      echo "        flag = 2 -> move res. after 2nd  run & prepare for 3rd"
+      echo "        flag = 3 -> move res. after 3rd  run"
+      echo "        flag = 4 -> compare Ocean results"
+      echo "        flag = 5 -> compare Atmos results"
+      echo "        flag = 6 -> diff pickup files"
+      echo " NB: need 2 data files: 'input_ocn/data.tst' & 'input_atm/data.tst'"
+      echo "                 corresponding to 1rst run"
+      exit ;;
+esac
+ksel=$1
+
+#make sure that local dir & ~jmc/bin is in the path:
+#export PATH=${PATH}:.
+RNPref=`ls ~jmc/bin/rnp`" -s"
+Prt10c=`ls ~jmc/bin/add0upto10c`
+ difex=`ls ~jmc/bin/dif_data`
+echo -n " use script: "
+echo    "   Prt10c='$Prt10c' ,"
+echo -n "   RNPref='$RNPref'"
+echo " and difex='$difex'"
+
+Nit=$NiOc
+Dbl=`expr $Nit + $Nit`
+noc1=`expr $noc0 + $Nit`
+noc2=`expr $noc0 + $Dbl`
+noc0c=`$Prt10c $noc0`
+noc1c=`$Prt10c $noc1`
+noc2c=`$Prt10c $noc2`
+echo 'Oce (rank_1):' $noc0  $noc1  $noc2
+echo $noc0c $noc1c $noc2c
+
+Nit=$NiAt
+Dbl=`expr $Nit + $Nit`
+nat1=`expr $nat0 + $Nit`
+nat2=`expr $nat0 + $Dbl`
+nat0c=`$Prt10c $nat0`
+nat1c=`$Prt10c $nat1`
+nat2c=`$Prt10c $nat2`
+echo 'Atm (rank_2):' $nat0  $nat1  $nat2
+echo $nat0c $nat1c $nat2c
+
+listOc="pickup pickup_cpl"
+listAt="pickup pickup_cpl pickup_ic pickup_land"
+
+#- dir where to put the results :
+dir1=res_2it
+dir2=res_1iA
+dir3=res_1iB
+
+#-- after a run, rename pickup file to restart
+if test $ksel = 0
+then
+ echo ' '
+ cd rank_1
+ for xx in $listOc
+ do
+  echo $RNPref $xx.ckptA $xx.$noc0c
+  $RNPref $xx.ckptA $xx.$noc0c
+ done
+ cd ../rank_2
+ for xx in $listAt
+ do
+  echo $RNPref $xx.ckptA $xx.$nat0c
+  $RNPref $xx.ckptA $xx.$nat0c
+ done
+ cd ..
+#-- prepare for running Dbl
+ echo ' prepare for running Dbl:'
+ Dbl=`expr $NiOc + $NiOc`
+ sed "1 s/[0-9]*/$Dbl/" input_cpl/data > rank_0/data
+ cp -p input_ocn/data.tst rank_1/data
+ cp -p input_atm/data.tst rank_2/data
+ echo 'rank_0/data:' `head -1 rank_0/data`
+ egrep 'nIter0|nTimeSteps' rank_?/data
+fi
+
+#-- after running Dbl:
+if test $ksel = 1
+then
+ rm -rf $dir1
+ mkdir $dir1
+ echo ' ' ; echo 'move STDOUT to' $dir1
+ mv rank_1/STDOUT* $dir1/ocnSTDOUT.2it
+ mv rank_2/STDOUT* $dir1/atmSTDOUT.2it
+
+ mkdir $dir1/ocn
+ cd rank_1
+ for xx in $listOc
+ do
+  echo $RNPref $xx.ckptA $xx.$noc2c
+  $RNPref $xx.ckptA $xx.$noc2c
+ done
+ echo 'move pickups to' $dir1/ocn
+ mv pickup*.$noc2c.* ../$dir1/ocn
+ cd ..
+
+ mkdir $dir1/atm
+ cd rank_2
+ for xx in $listAt
+ do
+  echo $RNPref $xx.ckptA $xx.$nat2c
+  $RNPref $xx.ckptA $xx.$nat2c
+ done
+ echo 'move pickups to' $dir1/atm
+ mv pickup*.$nat2c.* ../$dir1/atm
+ cd ..
+
+#-- prepare for running 1iA
+ echo ' prepare for running 1iA:'
+ Nit=$NiOc
+ Dbl=`expr $Nit + $Nit`
+ sed "1 s/[0-9]*/$Nit/" input_cpl/data > rank_0/data
+ sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_ocn/data.tst > rank_1/data
+ Nit=$NiAt
+ Dbl=`expr $Nit + $Nit`
+ sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_atm/data.tst > rank_2/data
+ echo 'rank_0/data:' `head -1 rank_0/data`
+ egrep 'nIter0|nTimeSteps' rank_?/data
+fi
+
+#-- after running 1iA
+if test $ksel = 2
+then
+ rm -rf $dir2
+ mkdir $dir2
+ echo ' ' ; echo 'move STDOUT to' $dir2
+ mv rank_1/STDOUT* $dir2/ocnSTDOUT.1iA
+ mv rank_2/STDOUT* $dir2/atmSTDOUT.1iA
+
+ mkdir $dir2/ocn
+ cd rank_1
+ for xx in $listOc
+ do
+  echo $RNPref $xx.ckptA $xx.$noc1c
+  $RNPref $xx.ckptA $xx.$noc1c
+ done
+ echo 'move pickups to' $dir2/ocn
+ mv pickup*.$noc1c.* ../$dir2/ocn
+ cd ..
+
+ mkdir $dir2/atm
+ cd rank_2
+ for xx in $listAt
+ do
+  echo $RNPref $xx.ckptA $xx.$nat1c
+  $RNPref $xx.ckptA $xx.$nat1c
+ done
+ echo 'move pickups to' $dir2/atm
+ mv pickup*.$nat1c.* ../$dir2/atm
+ cd ..
+
+#-- prepare for running 1iB
+ echo ' prepare for running 1iB:'
+ cd rank_1
+ sed "s/^ nIter0=$noc0/ nIter0=$noc1/g" data > data.tmp
+ mv -f data.tmp data
+ ln -s ../$dir2/ocn/* .
+ cd ../rank_2
+ sed "s/^ nIter0=$nat0/ nIter0=$nat1/g" data > data.tmp
+ mv -f data.tmp data
+ ln -s ../$dir2/atm/* .
+ cd ..
+ echo 'rank_0/data:' `head -1 rank_0/data`
+ egrep 'nIter0|nTimeSteps' rank_?/data
+fi
+
+#-- after running 1iB
+if test $ksel = 3
+then
+ rm -rf $dir3
+ mkdir $dir3
+ echo ' ' ; echo 'move STDOUT to' $dir3
+ mv rank_1/STDOUT* $dir3/ocnSTDOUT.1iB
+ mv rank_2/STDOUT* $dir3/atmSTDOUT.1iB
+
+ mkdir $dir3/ocn
+ cd rank_1
+ for xx in $listOc
+ do
+  echo $RNPref $xx.ckptA $xx.$noc2c
+  $RNPref $xx.ckptA $xx.$noc2c
+ done
+ echo 'move pickups to' $dir3/ocn
+ mv pickup*.$noc2c.* ../$dir3/ocn
+ cd ..
+
+ mkdir $dir3/atm
+ cd rank_2
+ for xx in $listAt
+ do
+  echo $RNPref $xx.ckptA $xx.$nat2c
+  $RNPref $xx.ckptA $xx.$nat2c
+ done
+ echo 'move pickups to' $dir3/atm
+ mv pickup*.$nat2c.* ../$dir3/atm
+ cd ..
+ echo 'restore std data files'
+ cp -p input_cpl/data rank_0
+ cp -p input_ocn/data rank_1
+ cp -p input_atm/data rank_2
+fi
+
+#-- compare output:
+if test $ksel = 4
+then
+ rm -f ocn.txt
+ echo ' run 2it: ---------- ' > tmp1.txt
+ grep "cg2d_init_res" $dir1/ocnSTDOUT.2it \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ Nit=`expr $NiOc + 2`
+ sed "$Nit i \ ... 2it continue ..." tmp1.txt > tmp2.txt
+ rm -f tmp1.txt
+ echo ' run 1iA: ---------- ' > tmp1.txt
+ grep "cg2d_init_res" $dir2/ocnSTDOUT.1iA \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ echo ' run 1iB: ---------- ' >> tmp1.txt
+ grep "cg2d_init_res" $dir3/ocnSTDOUT.1iB \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ nl tmp1.txt > tmp1.ttt
+ nl tmp2.txt > tmp2.ttt
+ join tmp1.ttt tmp2.ttt | sed 's/[0-9]*//' > ocn.txt
+ rm -f tmp1.ttt tmp2.ttt tmp1.txt tmp2.txt
+ echo ' ' ; echo '-- compare cg2d_init_res (Ocean):'
+ cat ocn.txt
+ exit
+fi
+
+if test $ksel = 5
+then
+ rm -f atm.txt
+ echo ' run 2it: ---------- ' > tmp1.txt
+ grep "cg2d_init_res" $dir1/atmSTDOUT.2it \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ Nit=`expr $NiAt + 2`
+ sed "$Nit i \ ... 2it continue ..." tmp1.txt > tmp2.txt
+ rm -f tmp1.txt
+ echo ' run 1iA: ---------- ' > tmp1.txt
+ grep "cg2d_init_res" $dir2/atmSTDOUT.1iA \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ echo ' run 1iB: ---------- ' >> tmp1.txt
+ grep "cg2d_init_res" $dir3/atmSTDOUT.1iB \
+      | sed 's/.* cg2d_init_res =//' >> tmp1.txt
+ nl tmp1.txt > tmp1.ttt
+ nl tmp2.txt > tmp2.ttt
+ join tmp1.ttt tmp2.ttt | sed 's/[0-9]*//' > atm.txt
+ rm -f tmp1.ttt tmp2.ttt tmp1.txt tmp2.txt
+ echo ' ' ; echo '-- compare cg2d_init_res (Atmos):'
+ cat atm.txt
+ exit
+fi
+
+#- compare pickup file:
+if test $ksel = 6
+then
+ echo ' ' ; echo '=== compare Ocn pickups: =============='
+ for xx in $listOc
+ do
+   $difex $dir1/ocn $dir3/ocn $xx.$noc2c
+ done
+ echo ' ' ; echo '=== compare Atm pickups: =============='
+ for xx in $listAt
+ do
+   $difex $dir1/atm $dir3/atm $xx.$nat2c
+ done
+ exit
+fi
+

@@ -12,6 +12,9 @@ script: tst1+1
 Note: the script is sensitive to space and upper-case / lower
   case characters regarding nIter0 line and nTimeSteps line.
 
+script: tst_2+2_cpl
+ = version adapted for coupled set-up (verification/cpl_aim+ocn)
+
 b) PBS-batch script that re-submit itself (loop).
 script: runScript
  call 2 short scripts: add0upto3c & add0upto10c

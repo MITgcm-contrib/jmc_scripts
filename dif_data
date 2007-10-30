@@ -1,0 +1,45 @@
+#! /bin/sh
+if [ $# -le 2 ] ; then
+  echo 'Usage: '`basename $0` ' dir1 dir2 list_of_files :'
+  echo ' ==> do diff dir1/file dir2/file'
+  echo '  for each file in list_of_files & for all tiles '
+  exit
+fi
+chkmeta=Y
+dir0=`pwd`
+dir1=$1
+dir2=$2
+shift ; shift ; 
+first=1
+listnamf=$*
+for zz in $listnamf
+do 
+ if test $first = 1 
+ then
+  cd $dir1
+  listX=`ls $zz.*.data | sed "s/$zz.//g" | sed "s/.data//g"`
+  cd $dir0
+  echo ' listX=' $listX
+  first=0
+ fi
+ echo '--> file=' $zz
+ for xx in $listX
+ do
+   echo diff $dir1/$zz.$xx.data $dir2
+   diff $dir1/$zz.$xx.data $dir2
+   out=$?
+   if test $out != 0 
+   then echo 'Diff outp=' $out ' ==> stop'
+    exit ; fi
+   if test $chkmeta = 'Y'
+   then
+    echo diff $dir1/$zz.$xx.meta $dir2
+    diff $dir1/$zz.$xx.meta $dir2
+    out=$?
+    if test $out != 0 
+    then echo 'Diff outp=' $out ' ==> stop'
+     exit ; fi
+   fi
+ done
+done
+exit
