@@ -1,13 +1,28 @@
 #!/bin/sh
 
-noc0=`sed -n 's/nIter0=//p' input_ocn/data.tst | sed 's/,//g' | sed 's/ //g'`
-Dbl=`sed -n 's/nTimeSteps=//p' input_ocn/data.tst | sed 's/,//g'`
-NiOc=`expr $Dbl / 2`
-nat0=`sed -n 's/nIter0=//p' input_atm/data.tst | sed 's/,//g' | sed 's/ //g'`
-Dbl=`sed -n 's/nTimeSteps=//p' input_atm/data.tst | sed 's/,//g'`
-NiAt=`expr $Dbl / 2`
+# $Header:  $
+# $Name:  $
 
-Nit=$NiOc
+if test -f input_ocn/data.tst
+then
+ noc0=`sed -n 's/nIter0=//p' input_ocn/data.tst | sed 's/,//g' | sed 's/ //g'`
+ Dbl=`sed -n 's/nTimeSteps=//p' input_ocn/data.tst | sed 's/,//g'`
+ NiOc=`expr $Dbl / 2`
+ Nit=$NiOc
+else
+ echo " file: 'input_ocn/data.tst' not found"
+ NiOc=0 ; Nit=2
+fi
+if test -f input_atm/data.tst
+then
+ nat0=`sed -n 's/nIter0=//p' input_atm/data.tst | sed 's/,//g' | sed 's/ //g'`
+ Dbl=`sed -n 's/nTimeSteps=//p' input_atm/data.tst | sed 's/,//g'`
+ NiAt=`expr $Dbl / 2`
+else
+ echo " file: 'input_atm/data.tst' not found"
+ NiAt=0
+fi
+
 case $# in
   1) ;;
    *) echo "Usage: `basename $0` flag"
@@ -20,10 +35,14 @@ case $# in
       echo "        flag = 4 -> compare Ocean results"
       echo "        flag = 5 -> compare Atmos results"
       echo "        flag = 6 -> diff pickup files"
-      echo " NB: need 2 data files: 'input_ocn/data.tst' & 'input_atm/data.tst'"
-      echo "                 corresponding to 1rst run"
       exit ;;
 esac
+if test $NiAt = 0 -o $NiOc = 0
+then 
+    echo " needs 2 data files: 'input_ocn/data.tst' & 'input_atm/data.tst'"
+    echo "  (corresponding to 1rst run) to continue"
+  exit
+fi
 ksel=$1
 
 #make sure that local dir & ~jmc/bin is in the path:
