@@ -1,28 +1,36 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.9 2007/10/24 16:14:28 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.10 2007/10/29 23:18:18 jmc Exp $
 # $Name:  $
 
-# Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
-Dbl=`sed -n 's/nTimeSteps=//p' data.tst | sed 's/,//g'`
-Nit=`expr $Dbl / 2`
-#Nit=2
+#- uses scripts in the path (1rst) or if not in the path, from dScript directory:
+dScript=../../../../MITgcm_contrib/jmc_script
 
-case $# in
+#- input :
+# 1) data.tst = parameter file "data" for 2.Nit iter run
+# 2) here or in dir temp : pickup(_cd).0..0{num0}.001.001.data
+
+NbArg=$#
+if test -r data.tst ; then
+# Nit = Nb of iter of 2nd & 3rd run (1rst one is 2 x Nit iter long)
+ Dbl=`sed -n 's/nTimeSteps=//p' data.tst | sed 's/,//g'`
+ Nit=`expr $Dbl / 2`
+else
+ echo '=> Need a readable "data.tst" file for the 2 x Nit iterations run'
+ Nit=2 ; NbArg=0;
+fi
+
+case $NbArg in
   1) ;;
    *) echo "Usage: `basename $0` flag"
       echo " Check restart: compare 1 run of 2 x $Nit it long"
       echo "     with 2 consecutive runs of $Nit it long each"
-      echo " where: flag = 1 -> do the 3 run"
+      echo " where: flag = 1 -> do the 3 runs"
       echo "        flag = 2 -> compare std_outp"
       echo "        flag = 3 -> compare pickup files"
       exit ;;
 esac
 flag=$1
-
-#- input :
-# 1) data.tst = parameter file "data" for 2.Nit iter run
-# 2) in dir temp : pickup(_cd).0..0{num0}.001.001.data
 
 num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 #num0="72000"
@@ -30,6 +38,7 @@ num0=`sed -n 's/nIter0=//p' data.tst | sed 's/,//g' | sed 's/ //g'`
 # list of pickup(s) that are needed for a restart :
 #listP='pickup pickup_cd pickup_nh pickup_ic pickup_land pickup_seaice'
 
+#- executable:
 mpi=0
 if [ $mpi -ge 1 ]
 then gcmExc=run_ifc_mpi
@@ -41,21 +50,40 @@ dir1=res_2it
 dir2=res_1iA
 dir3=res_1iB
 
-#make sure that local dir is in the path:
-export PATH=${PATH}:.
+#---------------------------
+# find where the 3 little scripts are:
 
+#export PATH=${PATH}:$HOME/MITgcm_contrib/jmc_script
+
+if test -d $dScript ; then : ; else echo 'dScript='$dScript 'is not a directory' ; fi
+
+ff=rnp ;
+ RNPs=`which $ff 2> /dev/null`
+ if test "x$RNPs" = x -a -x $dScript/$ff ; then RNPs=$dScript/$ff ; fi
+ if test "x$RNPs" != x ; then RNPs=$RNPs" -s" ; fi
+ff=add0upto10c ;
+ P10c=`which $ff 2> /dev/null`
+ if test "x$P10c" = x -a -x $dScript/$ff ; then P10c=$dScript/$ff ; fi
+ff=dif_data ;
+ DIFd=`which $ff 2> /dev/null`
+ if test "x$DIFd" = x -a -x $dScript/$ff ; then DIFd=$dScript/$ff ; fi
+echo " use script: P10c='$P10c'"
+echo "             RNPs='$RNPs'"
+echo "        and  DIFd='$DIFd'"
+if test "x$RNPs" = x -o "x$P10c" = x -o "x$DIFd" = x
+then echo 'missing some scripts' ; exit ; fi
 #---------------------------
 Dbl=`expr $Nit + $Nit`
 num1=`expr $num0 + $Nit`
 num2=`expr $num0 + $Dbl`
-num0c=`add0upto10c $num0`
-num1c=`add0upto10c $num1`
-num2c=`add0upto10c $num2`
+num0c=`$P10c $num0`
+num1c=`$P10c $num1`
+num2c=`$P10c $num2`
 echo $num0 $num1 $num2
 echo $num0c $num1c $num2c
 echo 'gcmExc='$gcmExc
 # exit
-#------------------------
+#---------------------------
 
 if test $flag = 1 ; then
 #------------
@@ -71,7 +99,7 @@ rm -f STDERR.0000
 
 cp -p data.tst data
 numF=`ls temp/pickup*.${num0c}* 2> /dev/null | grep -c pickup`
-if test $numF != 0 ; then ln -s temp/pickup*.${num0c}* . ; fi
+if test $numF != 0 ; then ln -s temp/pickup*.${num0c}* . 2> /dev/null ; fi
 echo '==> START RUN 2 x' $Nit 'it'
 if [ $mpi -ge 1 ]
 then ./$gcmExc std_outp.2it > TTT.out.2it 2>&1
@@ -87,7 +115,7 @@ listP=`ls pickup*.ckptA* | sed 's/\..*//g' | uniq`
 echo ' listP=' $listP
 for xx in $listP
 do
- rnp -s $xx.ckptA $xx.$num2c
+ $RNPs $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -109,7 +137,7 @@ if test $out != 0 ; then echo 'RUN 1iA STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iA'
 for xx in $listP
 do
- rnp -s $xx.ckptA $xx.$num1c
+ $RNPs $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -133,7 +161,7 @@ if test $out != 0 ; then echo 'RUN 1iB STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iB'
 for xx in $listP
 do
- rnp -s $xx.ckptA $xx.$num2c
+ $RNPs $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -161,11 +189,10 @@ fi
 
 if test $flag = 3 ; then
 #------------
-difex=`ls ~jmc/bin/dif_data`
 listP=`( cd $dir1 ; ls pickup*.$num2c* | sed 's/\..*//g' | uniq )`
 for xx in $listP
 do
- $difex $dir1 $dir3 $xx.$num2c
+ $DIFd $dir1 $dir3 $xx.$num2c
 done
 exit
 #------------
