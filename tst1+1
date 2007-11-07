@@ -1,11 +1,23 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.10 2007/10/29 23:18:18 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst1+1,v 1.11 2007/11/04 20:11:07 jmc Exp $
 # $Name:  $
 
-#- uses scripts in the path (1rst) or if not in the path, from dScript directory:
-dScript=../../../../MITgcm_contrib/jmc_script
+rnp_loc()
+{
+#   rnp_loc arg_1 arg_2
+#   rename files with prefix = 'arg_1' to files with prefix = 'arg_2'
+    echo 'rnp_loc:' $1 $2
+#   rnp -s $1 $2
+    listY=`ls -1 $1*`
+    for yy in $listY
+    do
+      zz=`echo $yy | sed "s/^$1/$2/"`
+      mv $yy $zz
+    done
+}
 
+#---------------------------
 #- input :
 # 1) data.tst = parameter file "data" for 2.Nit iter run
 # 2) here or in dir temp : pickup(_cd).0..0{num0}.001.001.data
@@ -51,38 +63,16 @@ dir2=res_1iA
 dir3=res_1iB
 
 #---------------------------
-# find where the 3 little scripts are:
-
-#export PATH=${PATH}:$HOME/MITgcm_contrib/jmc_script
-
-if test -d $dScript ; then : ; else echo 'dScript='$dScript 'is not a directory' ; fi
-
-ff=rnp ;
- RNPs=`which $ff 2> /dev/null`
- if test "x$RNPs" = x -a -x $dScript/$ff ; then RNPs=$dScript/$ff ; fi
- if test "x$RNPs" != x ; then RNPs=$RNPs" -s" ; fi
-ff=add0upto10c ;
- P10c=`which $ff 2> /dev/null`
- if test "x$P10c" = x -a -x $dScript/$ff ; then P10c=$dScript/$ff ; fi
-ff=dif_data ;
- DIFd=`which $ff 2> /dev/null`
- if test "x$DIFd" = x -a -x $dScript/$ff ; then DIFd=$dScript/$ff ; fi
-echo " use script: P10c='$P10c'"
-echo "             RNPs='$RNPs'"
-echo "        and  DIFd='$DIFd'"
-if test "x$RNPs" = x -o "x$P10c" = x -o "x$DIFd" = x
-then echo 'missing some scripts' ; exit ; fi
-#---------------------------
 Dbl=`expr $Nit + $Nit`
 num1=`expr $num0 + $Nit`
 num2=`expr $num0 + $Dbl`
-num0c=`$P10c $num0`
-num1c=`$P10c $num1`
-num2c=`$P10c $num2`
+num0c=`printf "%10.10i\n" $num0`
+num1c=`printf "%10.10i\n" $num1`
+num2c=`printf "%10.10i\n" $num2`
 echo $num0 $num1 $num2
 echo $num0c $num1c $num2c
 echo 'gcmExc='$gcmExc
-# exit
+#exit
 #---------------------------
 
 if test $flag = 1 ; then
@@ -115,7 +105,7 @@ listP=`ls pickup*.ckptA* | sed 's/\..*//g' | uniq`
 echo ' listP=' $listP
 for xx in $listP
 do
- $RNPs $xx.ckptA $xx.$num2c
+  rnp_loc $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir1
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -137,7 +127,7 @@ if test $out != 0 ; then echo 'RUN 1iA STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iA'
 for xx in $listP
 do
- $RNPs $xx.ckptA $xx.$num1c
+ rnp_loc $xx.ckptA $xx.$num1c
 done
 mv *.0??.0??.* $dir2
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -161,7 +151,7 @@ if test $out != 0 ; then echo 'RUN 1iB STOP before END => exit' ; exit ; fi
 echo '==>  END  RUN 1iB'
 for xx in $listP
 do
- $RNPs $xx.ckptA $xx.$num2c
+ rnp_loc $xx.ckptA $xx.$num2c
 done
 mv *.0??.0??.* $dir3
 txtF=`ls -1 *.txt 2> /dev/null`
@@ -190,9 +180,30 @@ fi
 if test $flag = 3 ; then
 #------------
 listP=`( cd $dir1 ; ls pickup*.$num2c* | sed 's/\..*//g' | uniq )`
-for xx in $listP
+chkmeta='Y'
+for yy in $listP
 do
- $DIFd $dir1 $dir3 $xx.$num2c
+ listY=`(cd $dir1 ; ls $yy.$num2c.*.data | sed "s/$yy\.$num2c\.//" | sed "s/\.data//")`
+ zz=$yy.$num2c
+ echo '--> file='$zz', listY='$listY
+ for xx in $listY
+ do
+   echo diff $dir1/$zz.$xx.data $dir3
+   diff $dir1/$zz.$xx.data $dir3
+   out=$?
+   if test $out != 0
+   then echo 'Diff outp=' $out ' ==> stop'
+    exit ; fi
+   if test $chkmeta = 'Y'
+   then
+    echo diff $dir1/$zz.$xx.meta $dir3
+    diff $dir1/$zz.$xx.meta $dir3
+    out=$?
+    if test $out != 0
+    then echo 'Diff outp=' $out ' ==> stop'
+     exit ; fi
+   fi
+ done
 done
 exit
 #------------

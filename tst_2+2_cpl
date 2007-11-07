@@ -1,7 +1,50 @@
 #!/bin/sh
 
-# $Header:  $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.2 2007/10/30 22:55:04 jmc Exp $
 # $Name:  $
+
+rnp_loc()
+{
+#   rnp_loc arg_1 arg_2
+#   rename files with prefix = 'arg_1' to files with prefix = 'arg_2'
+    echo 'rnp_loc:' $1 $2
+#   rnp -s $1 $2
+    yy=$1 ; zz=$2
+    listF=`ls -1 ${yy}*`
+    for xx in $listF
+    do
+      ff=`echo $xx | sed "s/^$yy/$zz/"`
+      mv $xx $ff
+    done
+}
+
+dif_tiles()
+{
+#   dif_data_loc dir1 dir2 file
+#   for all tiles  ==> do diff dir1/file dir2/file'
+    dir1=$1 ; dir2=$2 ; zz=$3
+    chkmeta='Y'
+    listX=`(cd $dir1 ; ls $zz.*.data | sed "s/$zz\.//" | sed "s/\.data//")`
+    echo '--> file=' $zz ', listX=' $listX
+    for xx in $listX
+    do
+      echo diff $dir1/$zz.$xx.data $dir2
+      diff $dir1/$zz.$xx.data $dir2
+      out=$?
+      if test $out != 0
+      then echo 'Diff outp=' $out ' ==> stop'
+       exit ; fi
+      if test $chkmeta = 'Y'
+      then
+       echo diff $dir1/$zz.$xx.meta $dir3
+       diff $dir1/$zz.$xx.meta $dir3
+       out=$?
+       if test $out != 0
+       then echo 'Diff outp=' $out ' ==> stop'
+        exit ; fi
+      fi
+    done
+}
 
 if test -f input_ocn/data.tst
 then
@@ -47,21 +90,14 @@ ksel=$1
 
 #make sure that local dir & ~jmc/bin is in the path:
 #export PATH=${PATH}:.
-RNPref=`ls ~jmc/bin/rnp`" -s"
-Prt10c=`ls ~jmc/bin/add0upto10c`
- difex=`ls ~jmc/bin/dif_data`
-echo -n " use script: "
-echo    "   Prt10c='$Prt10c' ,"
-echo -n "   RNPref='$RNPref'"
-echo " and difex='$difex'"
 
 Nit=$NiOc
 Dbl=`expr $Nit + $Nit`
 noc1=`expr $noc0 + $Nit`
 noc2=`expr $noc0 + $Dbl`
-noc0c=`$Prt10c $noc0`
-noc1c=`$Prt10c $noc1`
-noc2c=`$Prt10c $noc2`
+noc0c=`printf "%10.10i\n" $noc0`
+noc1c=`printf "%10.10i\n" $noc1`
+noc2c=`printf "%10.10i\n" $noc2`
 echo 'Oce (rank_1):' $noc0  $noc1  $noc2
 echo $noc0c $noc1c $noc2c
 
@@ -69,9 +105,9 @@ Nit=$NiAt
 Dbl=`expr $Nit + $Nit`
 nat1=`expr $nat0 + $Nit`
 nat2=`expr $nat0 + $Dbl`
-nat0c=`$Prt10c $nat0`
-nat1c=`$Prt10c $nat1`
-nat2c=`$Prt10c $nat2`
+nat0c=`printf "%10.10i\n" $nat0`
+nat1c=`printf "%10.10i\n" $nat1`
+nat2c=`printf "%10.10i\n" $nat2`
 echo 'Atm (rank_2):' $nat0  $nat1  $nat2
 echo $nat0c $nat1c $nat2c
 
@@ -89,15 +125,11 @@ then
  echo ' '
  cd rank_1
  for xx in $listOc
- do
-  echo $RNPref $xx.ckptA $xx.$noc0c
-  $RNPref $xx.ckptA $xx.$noc0c
+ do rnp_loc $xx.ckptA $xx.$noc0c
  done
  cd ../rank_2
  for xx in $listAt
- do
-  echo $RNPref $xx.ckptA $xx.$nat0c
-  $RNPref $xx.ckptA $xx.$nat0c
+ do rnp_loc $xx.ckptA $xx.$nat0c
  done
  cd ..
 #-- prepare for running Dbl
@@ -123,8 +155,7 @@ then
  cd rank_1
  for xx in $listOc
  do
-  echo $RNPref $xx.ckptA $xx.$noc2c
-  $RNPref $xx.ckptA $xx.$noc2c
+  rnp_loc $xx.ckptA $xx.$noc2c
  done
  echo 'move pickups to' $dir1/ocn
  mv pickup*.$noc2c.* ../$dir1/ocn
@@ -134,8 +165,7 @@ then
  cd rank_2
  for xx in $listAt
  do
-  echo $RNPref $xx.ckptA $xx.$nat2c
-  $RNPref $xx.ckptA $xx.$nat2c
+  rnp_loc $xx.ckptA $xx.$nat2c
  done
  echo 'move pickups to' $dir1/atm
  mv pickup*.$nat2c.* ../$dir1/atm
@@ -167,8 +197,7 @@ then
  cd rank_1
  for xx in $listOc
  do
-  echo $RNPref $xx.ckptA $xx.$noc1c
-  $RNPref $xx.ckptA $xx.$noc1c
+  rnp_loc $xx.ckptA $xx.$noc1c
  done
  echo 'move pickups to' $dir2/ocn
  mv pickup*.$noc1c.* ../$dir2/ocn
@@ -178,8 +207,7 @@ then
  cd rank_2
  for xx in $listAt
  do
-  echo $RNPref $xx.ckptA $xx.$nat1c
-  $RNPref $xx.ckptA $xx.$nat1c
+  rnp_loc $xx.ckptA $xx.$nat1c
  done
  echo 'move pickups to' $dir2/atm
  mv pickup*.$nat1c.* ../$dir2/atm
@@ -212,9 +240,7 @@ then
  mkdir $dir3/ocn
  cd rank_1
  for xx in $listOc
- do
-  echo $RNPref $xx.ckptA $xx.$noc2c
-  $RNPref $xx.ckptA $xx.$noc2c
+ do rnp_loc $xx.ckptA $xx.$noc2c
  done
  echo 'move pickups to' $dir3/ocn
  mv pickup*.$noc2c.* ../$dir3/ocn
@@ -223,9 +249,7 @@ then
  mkdir $dir3/atm
  cd rank_2
  for xx in $listAt
- do
-  echo $RNPref $xx.ckptA $xx.$nat2c
-  $RNPref $xx.ckptA $xx.$nat2c
+ do rnp_loc $xx.ckptA $xx.$nat2c
  done
  echo 'move pickups to' $dir3/atm
  mv pickup*.$nat2c.* ../$dir3/atm
@@ -291,12 +315,12 @@ then
  echo ' ' ; echo '=== compare Ocn pickups: =============='
  for xx in $listOc
  do
-   $difex $dir1/ocn $dir3/ocn $xx.$noc2c
+   dif_tiles $dir1/ocn $dir3/ocn $xx.$noc2c
  done
  echo ' ' ; echo '=== compare Atm pickups: =============='
  for xx in $listAt
  do
-   $difex $dir1/atm $dir3/atm $xx.$nat2c
+   dif_tiles $dir1/atm $dir3/atm $xx.$nat2c
  done
  exit
 fi

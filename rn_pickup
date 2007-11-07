@@ -1,0 +1,130 @@
+#!/bin/sh
+
+# $Header:  $
+# $Name:  $
+
+#- default:
+prt=1
+action=1
+cmd='mv -i'
+#- use main-pickup prefix to select between ckptA / ckptB:
+pref='pickup'
+
+flag=0 ; opt='' ; nbArg=$#
+while [ $nbArg -ge 1 ]
+do
+  case $1 in
+   '-s') if test $prt = 1 ; then prt=0 ; else prt=-1 ; fi
+         opt="$opt $1" ; nbArg=`expr $nbArg - 1` ; shift ;;
+   '-v') if test $prt = 1 ; then prt=2 ; else prt=-1 ; fi
+         opt="$opt $1" ; nbArg=`expr $nbArg - 1` ; shift ;;
+   '-n') action=0 ;
+         opt="$opt $1" ; nbArg=`expr $nbArg - 1` ; shift ;;
+   '-f') cmd='mv -f'
+         opt="$opt $1" ; nbArg=`expr $nbArg - 1` ; shift ;;
+   '-p') if [ $# -ge 2 ]
+         then pref=$2 ; opt="$opt $1=$2" 
+              nbArg=`expr $nbArg - 2` ; shift ; shift
+         else echo "Error: prefix missing after '$1'" ; flag=-1 ; nbArg=0
+         fi ;;
+   'A'|'B'|'I'|'T') if test $flag = 0 
+         then flag=$1 ; nbArg=`expr $nbArg - 1` ; shift
+         else echo "Error: incompatible methods '$flag' & '$1' "
+              flag=-1 ; nbArg=0 
+         fi ;;
+      *) echo "Error: unrecognized option: '$1'" ; flag=-1 ; nbArg=0 ;;
+  esac
+done
+if test $prt = -1 ; then 
+  echo "Error: options: '$opt' are not compatible" ; 
+  flag=0;
+fi
+
+if [ $prt -ge 2 ] ; then 
+  echo " flag='$flag' ; cmd='$cmd' ; move='$action' ; prt='$prt' ; opt='$opt'"
+fi
+if test $flag  = 0 -o $flag = -1
+then
+  echo "Usage: `basename $0`  method [options]"
+  echo " Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'"
+  echo "  method= A :: select pickup with suffix 'ckptA'"
+  echo "  method= B :: select pickup with suffix 'ckptB'"
+  echo "  method= I :: select the largest Iter number between 'ckptA' & 'ckptB'" 
+  echo "  method= T :: by Time: select the most recent pickup"
+  echo " option: -v = verbose-mode  /  -s = silent   (<- not both)"
+  echo " option: -n = do nothing (no mv)"
+  echo " option: -f = force to move files (using 'mv -f')"
+  echo " option: -p PREFIX = use PREFIX to select ckptA/B (e.g.: 'pickup_cd')"
+  echo "           (default: PREFIX='pickup' corresponds to main pickup file)"
+  exit 2
+fi
+#  ( Note: PREFIX does not limit the Nb of pickup files to
+#    rename, since it always rename all the pickup*.ckpt?.* )
+#- exit status:
+#      0 = normal renaming ; 1 = nothing to do ; > 1 = error :
+#      2 = argument list error  ; 3 = meta file is missing 
+#      4 = error in reading iteration number from meta file
+#--------------------------------------------------------------
+
+#- 1) make the list of potential pickup-meta file (-> listM)
+if test $flag = 'T'
+then
+ listM=`ls -t -1 $pref.*.meta 2> /dev/null | head -1`
+ if test "x$listM" = x
+ then echo "Error: no '$pref.*.meta' found" ; exit 3 ; fi
+ zz=`echo $listM | sed "s/$pref\.//" | sed 's/\..*$//'`
+ xx=`echo $zz | sed 's/[0-9]/a/g'`
+ if test $xx = 'aaaaaaaaaa'
+ then echo  ' => no need to rename pickup: latest='$listM
+ exit 1
+ fi
+fi
+
+if test $flag = 'A' -o $flag = 'B'
+then
+ zz="ckpt$flag"
+ listM=`ls -1 $pref.${zz}*.meta 2> /dev/null | head -1`
+ if test "x$listM" = x
+ then echo "Error: no '$pref.${zz}*.meta' found" ; exit 3 ; fi
+fi
+
+if test $flag = 'I'
+then
+#-  first search for global meta file, then tiled meta file
+  listM=`ls -1 $pref.ckpt{A,B}.meta 2> /dev/null`
+ if test "x$listM" = x ; then 
+  listM=`ls -1 $pref.ckpt{A,B}.[0-9][0-9][0-9].[0-9][0-9][0-9].meta 2> /dev/null`
+ fi
+ if test "x$listM" = x
+ then echo "Error: no '$pref.ckpt[A or B]*.meta' found" ; exit 3 ; fi
+fi
+
+if [ $prt -ge 2 ] ; then echo ' listM='$listM ; fi
+#-- 2) select the meta-file corresponding to the largest iteration number
+iter=0; 
+for xx in $listM
+do
+  num=`grep '^ timeStepNumber =' $xx | sed 's/timeStepNumber = \[//' | sed 's/ \];$//'`
+  if [ $num -gt $iter ] ; then
+   iter=$num
+   zz=`echo $xx | sed "s/$pref\.//" | sed 's/\..*$//'`
+   if [ $prt -ge 2 ] ; then echo ' num='$num 'in' $zz ; fi
+  fi
+done
+if test $iter = 0 ; then echo "Error: no iter found in meta file" ; exit 4 ; fi
+
+#-- 3) move pickup files:
+sufx=`printf "%10.10i\n" $iter`
+listP=`ls pickup*.${zz}* | sed 's/\..*//g' | uniq`
+if [ $prt -ge 1 ] ; then echo ' rename' $zz  '->' $sufx 'for all:' $listP ; fi
+for yy in $listP
+do
+  listF=`ls -1 $yy.${zz}*`
+  for xx in $listF
+  do
+    new=`echo $xx | sed "s/^$yy\.$zz/$yy\.$sufx/"`
+    if [ $prt -ge 2 ] ; then echo $cmd $xx $new ; fi
+    if test $action = 1 ; then    $cmd $xx $new ; fi
+  done
+done
+exit 0
