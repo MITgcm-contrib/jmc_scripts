@@ -1,33 +1,42 @@
-Some basic scripts are gather here. 
-They are not specially design to be general and obviously 
-need to be modified/customized for each application.
+Some basic scripts are gather here.
 
-a) the restart test : "1+1=2"
-script: tst1+1
- call 2 short scripts: rnp & add0upto10c
+a) the restart test : "2+2=4"
 
-* no input argument but few comments within the file tst1+1
-  (needs to be edited and modify).
-* an example of data.tst file is provided 
-Note: the script is sensitive to space and upper-case / lower
-  case characters regarding nIter0 line and nTimeSteps line.
+script: tst_2+2
+- to use in a run dir. after a successful "testreport"
+- input argument: '0','1','2','3','4' or 'All':
+  proceed step by step or all steps at once
+- tst_2+2 (no argument) -> print "usage"
+- know problems: specific restart procedure (with fizhi pkg or offline pkg)
+  not yet implemented
+
+script: do_test_2+2
+- call restart test "tst_2+2" multiple times, in every test experiment.
+- needs to be in MITgcm/verification (with a copy of tst_2+2i script)
+  and can only be used after a successful "testreport"
+- do_test_2+2 -help -> print "usage"
 
 script: tst_2+2_cpl
- = version adapted for coupled set-up (verification/cpl_aim+ocn)
+ = version of tst_2+2 adapted for coupled set-up (verification/cpl_aim+ocn)
 
 b) PBS-batch script that re-submit itself (loop).
 script: runScript
- call 2 short scripts: add0upto3c & add0upto10c
 
-* used (and tested) on myrinet-3 cluster.
-* suffer from a lack of meaningful comments.
-  
+- used (and tested) on myrinet-3 cluster.
+- suffer from a lack of meaningful comments.
+- not specially design to be general and obviously
+  need to be modified/customized for each set-up.
+
 c) A short script to split the ASCII Diagnostics-Stats output file
-   into separated files (one per field) that are easy to read/load 
+   into separated files (one per field) that are easy to read/load
    (e.g., in matlab, just use "load" command)
 script: extract_StD
  no known dependency
- + A matlab script to load in 1 array all the separated files:
++ A matlab script to load in 1 array all the separated files:
 matlab-script: read_StD
  no known dependency
 
+d) script: rn_pickup
+- Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'
+  with several selection options
+- rn_pickup (no argument) -> print "usage"
