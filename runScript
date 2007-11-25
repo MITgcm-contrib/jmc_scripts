@@ -37,9 +37,9 @@ cd $runDir
 
 set its=`egrep 'nIter0' data | sed 's/ nIter0=//'| sed 's/,$//'`
 set nms=`expr $its / $nit1mn`
-set nMs = `/home/jmc/bin/add0upto3c $nms`
+set nMs = `printf "%3.3i\n" $nms`
 set nme=`expr $nms + $partmn`
-set nMe = `/home/jmc/bin/add0upto3c $nme`
+set nMe = `printf "%3.3i\n" $nme`
 set ite=`expr $nme \* $nit1mn`
 
 set numPBS=`echo $PBS_NODEFILE | sed 's/\/usr\/spool\/PBS\/aux\///g'| sed 's/\.cg01//g'`
@@ -88,7 +88,7 @@ set ncpus = ( `wc -l mf | awk '{print $1}'` )
 set out=$?
 echo 'end with status' $out
 
-set iTe = `/home/jmc/bin/add0upto10c $ite`
+set iTe = `printf "%10.10i\n" $ite`
 if ( -f pickup.$iTe.001.001.data ) then
  set out=0
 else
