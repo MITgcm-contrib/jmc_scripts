@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.3 2007/11/07 01:40:47 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.4 2007/11/26 23:23:51 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -243,6 +243,7 @@ then
  done
  echo 'move pickups to' $dir3/ocn
  mv pickup*.$noc2c.* ../$dir3/ocn
+ rm -f pickup*.$noc1c.*
  cd ..
 
  mkdir $dir3/atm
@@ -252,6 +253,7 @@ then
  done
  echo 'move pickups to' $dir3/atm
  mv pickup*.$nat2c.* ../$dir3/atm
+ rm -f pickup*.$nat1c.*
  cd ..
  echo 'restore std data files'
  cp -p input_cpl/data rank_0
