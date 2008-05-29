@@ -47,9 +47,7 @@ for vv in $listV
 do
  case $vv in
    'Eta') var='ETAN'     ; vfl=$vv ;;
-              'ETAN'     ) var=$vv ; vfl='Eta' ;;
-   'Et2') var='ETANSQ'   ; vfl=$vv ;;
-              'ETANSQ'   ) var=$vv ; vfl='Et2' ;;
+              'ETAN'     ) var=$vv ; vfl='Eta';;
      'T') var='THETA'    ; vfl=$vv ;;
               'THETA'    ) var=$vv ; vfl='T' ;;
      'S') var='SALT'     ; vfl=$vv  ;;
@@ -61,11 +59,19 @@ do
      'W') var='WVEL'     ; vfl=$vv  ;;
               'WVEL'     ) var=$vv ; vfl='W' ;;
    'Phi') var='PHIHYD'   ; vfl=$vv  ;;
-              'PHIHYD'   ) var=$vv ; vfl='Phi' ;;
+              'PHIHYD'   ) var=$vv ; vfl='Phi';;
+   'Et2') var='ETANSQ'   ; vfl=$vv ;;
+              'ETANSQ'   ) var=$vv ; vfl='Et2';;
+    'T2') var='THETASQ'  ; vfl=$vv ;;
+              'THETASQ'  ) var=$vv ; vfl='T2' ;;
+    'S2') var='SALTSQ'   ; vfl=$vv  ;;
+              'SALTSQ'   ) var=$vv ; vfl='S2' ;;
     'U2') var='UVELSQ'   ; vfl=$vv  ;;
               'UVELSQ'   ) var=$vv ; vfl='U2' ;;
     'V2') var='VVELSQ'   ; vfl=$vv  ;;
               'VVELSQ'   ) var=$vv ; vfl='V2' ;;
+    'W2') var='WVELSQ'   ; vfl=$vv  ;;
+              'WVELSQ'   ) var=$vv ; vfl='W2' ;;
        *)  var=$vv ; vfl=$vv ;;
  esac
 #echo 'grep -m 1' "^ field : ${var} " $inpFil

@@ -14,7 +14,7 @@ function [nIt,rList,tim,vvA,listV]=read_StD(namF,sufx,listV);
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header:  $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.1 2007/03/01 04:35:35 jmc Exp $
 % $Name:  $
 
 namfhd=[namF,'_head','.',sufx];
@@ -67,11 +67,28 @@ end
 fclose(fid);
 if rf > 0,
 %- rename fields (consistent with script "extract_StD"):
-   listV=strrep(listV,'ETAN', 'Eta'); listV=strrep(listV,'ETANSQ','Et2');
-   listV=strrep(listV,'THETA' ,'T');  listV=strrep(listV,'SALT'  ,'S');
-   listV=strrep(listV,'UVEL'  ,'U');  listV=strrep(listV,'VVEL'  ,'V');
-   listV=strrep(listV,'WVEL'  ,'W');  listV=strrep(listV,'PHIHYD','Phi');
-   listV=strrep(listV,'UVELSQ','U2'); listV=strrep(listV,'VVELSQ','V2');
+   for j=1:rf,
+     var1=char(listV(j));
+     switch var1
+     case 'ETAN'    ,  var2='Eta';
+     case 'ETANSQ'  ,  var2='Et2';
+     case 'THETA'   ,  var2='T';
+     case 'SALT'    ,  var2='S';
+     case 'UVEL'    ,  var2='U';
+     case 'VVEL'    ,  var2='V';
+     case 'WVEL'    ,  var2='W';
+     case 'PHIHYD'  ,  var2='Phi';
+     case 'UVELSQ'  ,  var2='U2';
+     case 'VVELSQ'  ,  var2='V2';
+     case 'WVELSQ'  ,  var2='W2';
+     case 'THETASQ' ,  var2='T2';
+     otherwise     var2=var1;
+     end
+     listV(j)=cellstr(var2); 
+     if strcmp(var1,var2), fprintf(' %s\n',var2);
+          else fprintf(' %s --> %s\n',var1,var2); end
+   end
+%  listV
 end
 if flag ~= 0 | k > 0, frq,rList,kList, end
 if flag ~= 0, error(['not normal end after reading ',int2str(l),' lines']); end
