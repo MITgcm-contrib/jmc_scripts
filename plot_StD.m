@@ -1,13 +1,10 @@
  prefix='stDiag';
- namA={'mG_2','vmUpW'}; 
-%namA=char{'r525','r526','r527','r528'}; 
- Nexp=size(namA,2);
-%-
-%namA(2)={'r528'};
+ namA='r527'; 
+ Nexp=1; Nc=size(namA,2);
+%--
 
 % $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.1 2008/05/29 23:47:13 jmc Exp $
 % $Name:  $
-
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 %nItMx=60*ones(1,Nexp);
@@ -32,8 +29,8 @@ if krd > 0,
 
 %- start to read the longest record:
   n=1; rf=-1; if strcmp(char(listV),'all_flds'), rf=0; end
-  [ntA(n),rList,tim,vv1,listV] = ...
-    read_StD(prefix,namA(n),listV);
+  [ntA(n),rList,tim,vv1,listV,kList] = ...
+    read_StD(prefix,namA(n,:),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
 %- set global dims: & load vvA --> vvB
   nbV=size(listV,2);
@@ -43,7 +40,7 @@ if krd > 0,
 %----
  for n=2:Nexp,
   [ntA(n),rList,tim,vv1,listV] = ...
-    read_StD(prefix,namA(n),listV);
+    read_StD(prefix,namA(n,:),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
   if (nrec < nIt),
     fprintf('\n');
@@ -104,8 +101,8 @@ linA(6,:)='c-';
 
 ieA=min(ieA,nItMx);
 %titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ; 
-titall='Global Ocean, Cubic-G (32x32) , NCEP Forc (2)' ;
-%titall='Dyncore test-case 5 (cs-32)' ;
+%titall='Global Ocean, Cubic-G (32x32) , NCEP Forc (2)' ;
+titall=['Exp: ',namLg(1,:)];
 
 %=========================================================
  
@@ -116,6 +113,21 @@ for ng=1:nbV,
  titv=strrep(namV,'_','\_');
 %if strcmp(namV,'Eta'), vv1=vv1/100; titv='Eta [mb]'; end
 %if strcmp(namV,'T'), kl=1; end
+ if strcmp(namV,'T'), 
+   namfil=['../res_',namA(2:end),'/RC']; D=dir([namfil,'.data']);
+   if size(D,1) == 1,
+     rC=rdmds(namfil);
+     fprintf(' convert Pot.Temp to Temp.:');
+%    fprintf(' convert Pot.Temp to Temp.:'); fprintf(' %i',size(vv1));
+     kappa=2/7; facP=squeeze(rC)/1.e+5; facP=facP.^kappa;
+     var=facP*ones(1,nrec*4*Nexp); var=reshape(var,[nk-1 nrec 1 4 Nexp]);
+     vv1([2:nk],:,1,[1:4],:)=vv1([2:nk],:,1,[1:4],:).*var;
+%    for k=2:nk, vv1(k,:,1,[1:4],:)=vv1(k,:,1,[1:4],:)*facP(k-1); end
+     fprintf(' OK\n');
+   else
+     fprintf(' no file: %s\n',namfil);
+   end
+ end
 %if ng == 1, flag=2*list_on(1) ; end
  if kl > 0, titv=[titv,'\_',int2str(kl)];
    fprintf([' var= ',namV,' at level k= %i \n'],kl);
@@ -125,10 +137,11 @@ for ng=1:nbV,
 %--
   figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
 % if ng == 2, var=squeeze(vv1(2,:,1,:,:)); end % to get surf.Temp
-  var=squeeze(vv1(1+kl,:,1,:,:));
-  dd=squeeze(max(var)-min(var)); av=squeeze(mean(var));
+  if kList(ng) == 1,
+   var=squeeze(vv1(1+kl,:,1,:,:));
+   dd=squeeze(max(var)-min(var)); av=squeeze(mean(var));
    if Nexp == 1, av=av'; dd=dd'; end ;
-  for nv=1:4,
+   for nv=1:4,
     subplot(410+nv); ttmn=' Mx-mn:'; ttav=' Av:';
     for n=1:Nexp,
       plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),nv,n),linA(n,:));
@@ -138,13 +151,32 @@ for ng=1:nbV,
     end ; hold off ;
     AA=axis ; dAA=AA(4)-AA(3);
     if AA(3)*AA(4) <= 0, AA(3)=min(AA(3),-dAA/10); AA(4)=max(AA(4),dAA/10); end
-    if ttax1 < ttax2, AA(1)=ttax1; AA(2)=ttax2; end;
+    if ttax1 < ttax2, AA(1)=ttax1; AA(2)=ttax2; end; 
     axis(AA); grid ;
     if nv == 1, title(['Avr ',titv,'  ',ttmn]); end
     if nv == 2, title(['Std-Dev ',titv,'  ',ttav]); end
-    if nv == 3, title(['min ',titv,'  ',ttav]); legend(namLg,0); end
+    if nv == 3, title(['min ',titv,'  ',ttav]); legend(namLg(1:Nexp,:),0); end
     if nv == 4, title(['Max ',titv,'  ',ttav]); end
-  end ; xlabel(titT);
+   %if nv == 2, title(['Del-2 ',titv,'  ',ttav]); end
+   end ; xlabel(titT);
+  else
+   n=1;
+   for nv=1:4,
+    subplot(410+nv);
+    var=squeeze(vv1(2:nk,:,1,nv,n))';
+    mnV=min(var(:)); MxV=max(var(:)); ccv=c_levs(mnV,MxV,-12);
+    [cs,h]=contour(ttA(isA(n):ieA(n),n),[1:nk-1],var(isA(n):ieA(n),:)',ccv);
+   %clabel(cs);isoline0(h);
+    colorbar;
+    if nv == 1, title(['Avr ',titv]); end
+    if nv == 2, title(['Std-Dev ',titv]); end
+    if nv == 3, title(['min ',titv]); ; end
+    if nv == 4, title(['Max ',titv]); end
+    AA=axis; dAA=AA(4)-AA(3); 
+    ttmn=sprintf('mn= %4.3g , Mx= %4.3g',mnV,MxV);
+    text(AA(1)*.4+AA(2)*.6,AA(3)-0.27*dAA,ttmn);
+   end ; xlabel(titT);
+  end
 %--
   axes('position',[.01,.01,.99,.99],'Visible','off');
   T=text(0.5,0.97,titall);

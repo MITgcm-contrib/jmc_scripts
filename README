@@ -16,6 +16,9 @@ script: do_test_2+2
   and can only be used after a successful "testreport"
 - do_test_2+2 -help -> print "usage"
 
+NOTE: scripts "tst_2+2" & "do_test_2+2" have been moved (Dec 25, 2007) 
+ to: MITgcm/tools
+
 script: tst_2+2_cpl
  = version of tst_2+2 adapted for coupled set-up (verification/cpl_aim+ocn)
 
@@ -32,9 +35,12 @@ c) A short script to split the ASCII Diagnostics-Stats output file
    (e.g., in matlab, just use "load" command)
 script: extract_StD
  no known dependency
-+ A matlab script to load in 1 array all the separated files:
-matlab-script: read_StD
++  A matlab script to load in 1 array all the separated files:
+matlab-script: read_StD.m
  no known dependency
++  2 example scripts to make simple plots from Stat-Diags output:
+matlab-script: grph_StD.m (uses read_StD.m)
+matlab-script: plot_StD.m (uses read_StD.m)
 
 d) script: rn_pickup
 - Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'

@@ -1,5 +1,5 @@
-function [nIt,rList,tim,vvA,listV]=read_StD(namF,sufx,listV);
-% [nIt,rList,tim,vvA,listV]=read_StD(namF,sufx,listV);
+function [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
+% [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
 %
 % read ASCII stat-Diags output files (after splitted by script extract_StD)
 %
@@ -11,12 +11,15 @@ function [nIt,rList,tim,vvA,listV]=read_StD(namF,sufx,listV);
 %  rList    = list of region number
 %  tim(:,1) = iterations number ; tim(:,2) = time in simulation
 %  listV    = list of fields
+%  kList    = list of levels number
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.1 2007/03/01 04:35:35 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.2 2008/05/29 23:47:13 jmc Exp $
 % $Name:  $
 
+%- Remove insignificant whitespace:
+sufx=strtrim(char(sufx));
 namfhd=[namF,'_head','.',sufx];
 namfil=[namF,'_Iter','.',sufx];
  fprintf(['read ',sufx,' :']);
