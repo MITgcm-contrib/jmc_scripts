@@ -40,7 +40,7 @@ matlab-script: read_StD.m
  no known dependency
 +  2 example scripts to make simple plots from Stat-Diags output:
 matlab-script: grph_StD.m (uses read_StD.m)
-matlab-script: plot_StD.m (uses read_StD.m)
+matlab-script: plot_StD.m (uses read_StD.m, c_levs.m)
 
 d) script: rn_pickup
 - Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'
