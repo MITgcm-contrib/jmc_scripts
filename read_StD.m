@@ -15,11 +15,12 @@ function [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.2 2008/05/29 23:47:13 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.3 2008/10/08 18:18:04 jmc Exp $
 % $Name:  $
 
 %- Remove insignificant whitespace:
-sufx=strtrim(char(sufx));
+%sufx=strtrim(char(sufx)); % <-- only with matlab-7 or more recent
+sufx=strrep(char(sufx),' ','');
 namfhd=[namF,'_head','.',sufx];
 namfil=[namF,'_Iter','.',sufx];
  fprintf(['read ',sufx,' :']);
