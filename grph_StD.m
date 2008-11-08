@@ -1,20 +1,18 @@
- prefix='stDiag';
- namA={'mG_2','vmUpW'}; 
-%namA=char{'r525','r526','r527','r528'}; 
+ prefix='dynStD';
+ namA={'r16b','r17a'}; 
+%namA={'r17a'}; 
  Nexp=size(namA,2);
 %-
-%namA(2)={'r528'};
+%namA(2)={'r16a'};
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.1 2008/05/29 23:47:13 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.2 2008/10/08 18:18:04 jmc Exp $
 % $Name:  $
 
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
-%nItMx=60*ones(1,Nexp);
+nItMx=2400*ones(1,Nexp);
 namLg=namA ; namLg=strrep(namLg,'_','\_');
 %-----------
-%- ngEn = Nb of Energy plot: = 2 or = 4  ;
-ngEn=2;
 %- test if the variable krd is define :
 if size(who('krd'),1) > 0,
  fprintf('krd is defined and = %i \n',krd);
@@ -23,11 +21,12 @@ else
 end
 if krd > 0,
 %- define list of fields to read in:
+ clear listV ;
 %listV={'Eta','U','V','W','T','S','DETADT2','RELHUM','Phi'};
-%listV={'Eta','U','V','W','T','S','CONVADJ','DETADT2'};
+ listV={'Eta','W','T','S','CONVADJ','DETADT2'};
 %listV={'Eta','UE_VEL_C','VN_VEL_C','W','T','DETADT2','Phi'};
 %- or take all them:
- clear listV ; listV='all_flds';
+%clear listV ; listV='all_flds';
 %-----------
 
 %- start to read the longest record:
@@ -67,7 +66,7 @@ elseif krd < 0,
 end
 if krd ~= 0,
  ttA=squeeze(tiA(:,2,:));
- ttA=ttA/86400; titT='days'; %ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
+ ttA=ttA/86400; titT='days'; ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
 end
 %=========================================================
 
@@ -91,9 +90,9 @@ nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
 isA=ones(1,Nexp); ieA=ntA;
 %- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500) 
 %isA=isA*31 ; % drop the 1rst mnth (1 Monitor/d)
-%isA=isA*36 ; % drop the 1rst year (1 Monitor/10d)
+isA=isA*2 ; % drop the 1rst mnth (1 Monitor/30d)
 %isA(1)=31 ; isA(2)=4 ; % drop the 1rst mnth
-%ieA(:)=360; isA(:)=1;
+%ieA(:)=240; %isA(:)=1;
 
 linA(1,:)='k-'; % ieA(1)=60 ; % ieA(1)=1152 ;
 linA(2,:)='b-';
@@ -104,7 +103,7 @@ linA(6,:)='c-';
 
 ieA=min(ieA,nItMx);
 %titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ; 
-titall='Global Ocean, Cubic-G (32x32) , NCEP Forc (2)' ;
+titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
 %titall='Dyncore test-case 5 (cs-32)' ;
 
 %=========================================================
@@ -115,7 +114,7 @@ for ng=1:nbV,
  vv1=vvA(:,:,:,:,ng,:); namV=char(listV(ng));
  titv=strrep(namV,'_','\_');
 %if strcmp(namV,'Eta'), vv1=vv1/100; titv='Eta [mb]'; end
-%if strcmp(namV,'T'), kl=1; end
+%if strcmp(namV,'T'), kl=1; end		% <-- to get surf.Temp
 %if ng == 1, flag=2*list_on(1) ; end
  if kl > 0, titv=[titv,'\_',int2str(kl)];
    fprintf([' var= ',namV,' at level k= %i \n'],kl);
@@ -124,10 +123,11 @@ for ng=1:nbV,
  if flag == 1
 %--
   figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
-% if ng == 2, var=squeeze(vv1(2,:,1,:,:)); end % to get surf.Temp
-  var=squeeze(vv1(1+kl,:,1,:,:));
-  dd=squeeze(max(var)-min(var)); av=squeeze(mean(var));
-   if Nexp == 1, av=av'; dd=dd'; end ;
+  var=squeeze(vv1(1+kl,:,1,:,:)); dd=zeros(5,Nexp); av=zeros(5,Nexp);
+  for n=1:Nexp,
+   dd(:,n)=max(var(isA(n):ieA(n),:,n))-min(var(isA(n):ieA(n),:,n));
+   av(:,n)=mean(var(isA(n):ieA(n),:,n));
+  end
   for nv=1:4,
     subplot(410+nv); ttmn=' Mx-mn:'; ttav=' Av:';
     for n=1:Nexp,
