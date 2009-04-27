@@ -1,0 +1,196 @@
+#! /usr/bin/env bash
+
+mkfile='Makefile'
+if [ $# -ge 1 ] ; then 
+  if test $1 = '-h' ; then
+    echo "Usage: `basename $0` MAKEFILE (default: 'Makefile') ; [-h] print this"
+    exit 9
+  fi
+  mkfile=$1
+fi
+  
+if test ! -f $mkfile ; then
+  echo "`basename $0` error: missing file '$mkfile'"
+  exit 8
+fi
+
+cmdline=`grep '^# .*genmake2 ' $mkfile | sed 's/^# *//'`
+echo " get Command-Line from file '$mkfile' :"
+echo $cmdline
+
+printf "===  Parse Options  ===\n"
+CMDLINE=
+MODS=
+flg=0
+MPI=0
+prev=
+dbq=0 ; sgq=0 ; keep=
+# put newline between word in cmdline:
+# CMDLINE=`echo $cmdline | awk '{ for(i=1;i<=NF;i++) print $i}'`
+#echo "CMDLINE='$CMDLINE'"
+for xx in $cmdline
+do
+  arg=`echo $xx`
+  # glue multiple words argument (unbalanced starting & ending double quote)
+  n1=`echo $xx | grep -c '^"'`
+  n2=`echo $xx | grep -c '"$'`
+  if [ $n1 -eq 1 -a $n2 -eq 0 ] ; then
+      dbq=1; keep=$xx
+      continue
+  fi
+  if [ $n1 -eq 0 -a $dbq -eq 1 ] ; then
+    if [ $n2 -eq 1 ] ; then 
+      n1=$dbq ; dbq=0 
+      xx="$keep $xx"
+    else 
+      keep="$keep $xx"
+      continue
+    fi
+  fi
+  # remove starting & ending double quote
+  if [ $n1 -eq 1 -a $n2 -eq 1 ] ; then
+      arg=`echo $xx | sed 's/^"//' | sed 's/"$//'`
+  fi
+  # glue multiple words argument (unbalanced starting & ending single quote)
+  n1=`echo $xx | grep -c "^'"`
+  n2=`echo $xx | grep -c "'$"`
+  if [ $n1 -eq 1 -a $n2 -eq 0 ] ; then
+      sgq=1; keep=$xx
+      continue
+  fi
+  if [ $n1 -eq 0 -a $sgq -eq 1 ] ; then
+    if [ $n2 -eq 1 ] ; then 
+      n1=$sgq ; sgq=0 
+      xx="$keep $xx"
+    else 
+      keep="$keep $xx"
+      continue
+    fi
+  fi
+  # remove starting & ending single quote
+  if [ $n1 -eq 1 -a $n2 -eq 1 ] ; then
+      arg=`echo $xx | sed "s/^'//" | sed "s/'$//"`
+  fi
+  # process "arg"
+  opt=`expr "x$arg" : 'x[^=]*=\(.*\)'`
+# echo "xx='$xx' ; arg='$arg' ; opt='$opt'"
+  # sav "arg" to CMDLINE <- not actually used
+  #eqs=`echo $arg | grep -c '='`
+  #if [ $eqs -gt 0 ] ; then
+  #  pfx=`echo $arg | sed 's/=.*$/=/'`
+  #  nw=`echo $opt | wc -w`
+  #  if test $nw = '1' ; then
+  #    CMDLINE="$CMDLINE $pfx$opt"
+  #  else
+  #    CMDLINE="$CMDLINE $pfx'$opt'"
+  #  fi
+  #else
+    nw=`echo $arg | wc -w`
+    if test $nw = '1' ; then
+      CMDLINE="$CMDLINE $arg"
+    else
+      CMDLINE="$CMDLINE '$arg'"
+    fi
+  #fi
+  if test -n "$prev" -a $flg = '1' ; then
+      eval "$prev=\$arg"
+      prev=
+      continue
+  fi
+  case $arg in
+   -mpi | --mpi | -mpi=* | --mpi=* ) 
+      MPI=`expr $MPI + 1` ;;
+   -mods | --mods | -mo | --mo ) 
+      prev=MODS
+      flg=`expr $flg + 1` ;;
+   -mods=* | --mods=* | -mo=* | --mo=* ) 
+      MODS=$opt
+      flg=`expr $flg + 1` ;;
+    *) ;;
+  esac
+done
+
+printf "=== \n"
+echo " Set MPI='$MPI' ; MODS='$MODS'"
+#echo "flg='$flg'"
+
+if [ $flg -lt 1 ] ; then
+  echo "`basename $0` error: no '-mods' found"
+  exit 4
+fi
+if [ $flg -gt 1 ] ; then
+  echo "`basename $0` error: found multiple '-mods' ($flg)"
+  exit 3
+fi
+if [ $MPI -gt 1 ] ; then
+  echo "`basename $0` error: found multiple '-mpi' ($MPI)"
+  exit 2
+fi
+
+#---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+
+printf "===  Link / Unlink *_mpi files from 'MODS' dirs  ===\n"
+printf "  MODS dir: "
+MPI_LNKF=
+for d in $MODS ; do
+    if test ! -d $d ; then
+	echo
+	echo "Error: MODS directory \"$d\" not found!"
+	exit 1
+    else
+	printf "$d "
+	#SOURCEDIRS="$SOURCEDIRS $d"
+	#INCLUDEDIRS="$INCLUDEDIRS $d"
+	#-------------------------------------------------------
+	# Put special links so that MPI specific files are used
+	MPI_FILES=`(cd $d ; find . -name "*_mpi" -print)`
+	for i in $MPI_FILES ; do
+	  ii=`echo $i | sed 's:^\./::'`
+	  name=`echo $ii | sed 's:_mpi::' `
+	  if test $MPI = 0 ; then
+	  # NO: We undo an _mpi symbolically linked file
+	    if test -L $name ; then
+	      cmp $name "$d/$ii" > /dev/null 2>&1
+	      RETVAL=$?
+	      if test "x$RETVAL" = x0 ; then
+		printf "Un-linking $name ; "
+		rm -f $name
+	      fi
+	    fi
+	  else
+	  # YES: We symbolically link this file (with conditions if already there)
+	    if test -L $name ; then
+	      cmp $d/$ii $name > /dev/null 2>&1
+	      RETVAL=$?
+	      yy=0 ; 
+	      for xx in $MPI_LNKF ; do if test $xx = $name ; then yy=1 ; fi ; done
+ 	      if test "x$RETVAL" != x0 -a $yy = 0 ; then
+	      # remove sym-link if different and has not just been linked
+		printf "Un-link + "
+		rm -f $name
+	      fi
+	      if test "x$RETVAL" = x0 ; then
+	      # if identical, keep sym-link and keep record of it
+		MPI_LNKF="$MPI_LNKF $name"
+	      fi
+	    fi
+	    if ! test -f $name ; then
+	      # make sym-link and keep record of it
+		printf "Linking $ii to $name ; "
+		ln -sf $d/$ii $name
+		MPI_LNKF="$MPI_LNKF $name"
+	    fi
+	  fi
+	done
+	#-------------------------------------------------------
+    fi
+done
+echo
+echo "MPI_LNKF='$MPI_LNKF'"
+
+#---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+printf "===  Generate new Makefile  ===\n"
+#echo $CMDLINE
+#eval $CMDLINE
+echo $cmdline
+eval $cmdline

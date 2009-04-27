@@ -46,3 +46,9 @@ d) script: rn_pickup
 - Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'
   with several selection options
 - rn_pickup (no argument) -> print "usage"
+
+e) script: mk_mkfile
+- run genmake2 with the same options as when "Makefile" was generated
+ (needs an existing previous "Makefile") ; this replaces "make makefile".
+ in addition, link *_mpi files from the MODS directory when -mpi was 
+ used to generate the previous Makefile.
