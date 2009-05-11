@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header:  $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/derive_other_types,v 1.1 2009/05/11 12:32:37 jmc Exp $
 # $Name:  $
 
 #- This script is intended to help keeping up to date the 4 source files: 
@@ -17,11 +17,13 @@ s/Real\*4/Real*8/g
 s/real\*4/real*8/g
 EOF
 
+kWord='Header'
+
 xx='mdsio_pass_r8torl.F'
 yy=`echo $xx | sed 's/_r8/_r4/'`
 echo "generate $xx from $yy"
-sed -n '/^C \$Header:/p' $xx > $tmpOutF
-sed -f $chg4to8 $yy | sed '/^C \$Header:/d' >> $tmpOutF 
+sed -n "/^C \$$kWord:/p" $xx > $tmpOutF
+sed -f $chg4to8 $yy | sed "/^C \$$kWord:/d" >> $tmpOutF 
 cmp -s $xx $tmpOutF
 outp=$?
 #echo $outp
@@ -42,8 +44,8 @@ for xx in `ls mdsio_pass_r?tors.F`
 do
  yy=`echo $xx | sed 's/rs\.F$/rl.F/'`
 echo "generate $xx from $yy"
-sed -n '/^C \$Header:/p' $xx > $tmpOutF
-sed 's/RL/RS/g' $yy | sed '/^C \$Header:/d' >> $tmpOutF  
+sed -n "/^C \$$kWord:/p" $xx > $tmpOutF
+sed 's/RL/RS/g' $yy | sed "/^C \$$kWord:/d" >> $tmpOutF  
 cmp -s $xx $tmpOutF
 outp=$?
 #echo $outp
