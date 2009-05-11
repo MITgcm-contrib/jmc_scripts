@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# $Header:  $
+# $Name:  $
+
+#- This script is intended to help keeping up to date the 4 source files: 
+#  "mdsio_pass_r{4,8}tor{l,s}.F" (same code, just different type R4,R8,RS,RL)
+#  From the 1rst src file (mdsio_pass_r4torl.F), derive the 3 others
+#   but keeping the original CVS header
+
+showDiff=1
+chg4to8=tmp_A.$$
+tmpOutF=tmp_O.$$
+cat <<EOF >> $chg4to8
+s/R4/R8/g
+s/Real\*4/Real*8/g
+s/real\*4/real*8/g
+EOF
+
+xx='mdsio_pass_r8torl.F'
+yy=`echo $xx | sed 's/_r8/_r4/'`
+echo "generate $xx from $yy"
+sed -n '/^C \$Header:/p' $xx > $tmpOutF
+sed -f $chg4to8 $yy | sed '/^C \$Header:/d' >> $tmpOutF 
+cmp -s $xx $tmpOutF
+outp=$?
+#echo $outp
+if test $outp = 0 ; then
+ echo ' no changes in:' $xx
+ rm -f $tmpOutF
+else
+ if test $showDiff = 1 ; then 
+   echo "diff $xx $tmpOutF"
+   diff $xx $tmpOutF
+ fi
+ echo 'Update:' $xx
+ mv -i  $tmpOutF $xx
+fi
+
+
+for xx in `ls mdsio_pass_r?tors.F`
+do
+ yy=`echo $xx | sed 's/rs\.F$/rl.F/'`
+echo "generate $xx from $yy"
+sed -n '/^C \$Header:/p' $xx > $tmpOutF
+sed 's/RL/RS/g' $yy | sed '/^C \$Header:/d' >> $tmpOutF  
+cmp -s $xx $tmpOutF
+outp=$?
+#echo $outp
+if test $outp = 0 ; then
+ echo ' no changes in:' $xx
+ rm -f $tmpOutF
+else
+ if test $showDiff = 1 ; then 
+   echo "diff $xx $tmpOutF"
+   diff $xx $tmpOutF
+ fi
+ echo 'Update:' $xx
+ mv -i  $tmpOutF $xx
+fi
+done
+
+rm -f $chg4to8
