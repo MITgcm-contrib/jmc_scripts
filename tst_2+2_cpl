@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.4 2007/11/26 23:23:51 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.5 2007/11/26 23:46:21 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -110,7 +110,7 @@ nat2c=`printf "%10.10i\n" $nat2`
 echo 'Atm (rank_2):' $nat0  $nat1  $nat2
 echo $nat0c $nat1c $nat2c
 
-listOc="pickup pickup_cpl"
+listOc="pickup"
 listAt="pickup pickup_cpl pickup_ic pickup_land"
 
 #- dir where to put the results :
