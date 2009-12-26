@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.5 2007/11/26 23:46:21 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.6 2009/09/14 18:52:21 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -65,27 +65,53 @@ else
  NiAt=0
 fi
 
-case $# in
-  1) ;;
-   *) echo "Usage: `basename $0` flag"
-      echo " Check restart of coupled set-up: compare 1 run of 2 x $Nit it long"
-      echo "                       with 2 consecutive runs of $Nit it long each"
-      echo " where: flag = 0 -> prepare for 1rst run"
-      echo "        flag = 1 -> move res. after 1rst run & prepare for 2nd"
-      echo "        flag = 2 -> move res. after 2nd  run & prepare for 3rd"
-      echo "        flag = 3 -> move res. after 3rd  run"
-      echo "        flag = 4 -> compare Ocean results"
-      echo "        flag = 5 -> compare Atmos results"
-      echo "        flag = 6 -> diff pickup files"
-      exit ;;
-esac
+#- parse options:
+CMD='run_cpl_test'
+MTH=
+argList=$*
+for xx in $argList
+do
+ if test $xx = '-mth' ; then MTH=$xx ; shift ; continue ; fi
+ if test -x ${CMD}_$xx ; then CMD="${CMD}_$xx" ; shift ; continue ; fi
+done
+
+if [ $# -ne 1 ]
+then
+   echo "Usage: `basename $0` [opt] flag"
+   echo " Check restart of coupled set-up: compare 1 run of 2 x $Nit it long"
+   echo "                       with 2 consecutive runs of $Nit it long each"
+   echo "opt = -mth : run script '$CMD' with option '-mth'"
+   echo "opt = sufx : run script 'run_cpl_test_{sufx}'"
+   echo " where: flag = 0  -> prepare for 1rst run"
+   echo "        flag = r1 -> do 1rst run and step 1"
+   echo "        flag =  1 -> move res. after 1rst run & prepare for 2nd"
+   echo "        flag = r2 -> do 2nd  run and step 2"
+   echo "        flag =  2 -> move res. after 2nd  run & prepare for 3rd"
+   echo "        flag = r3 -> do 3rd  run and step 3"
+   echo "        flag =  3 -> move res. after 3rd  run"
+   echo "        flag=(r)N+ , N=1,2,3 => do steps (+run) from: (r)N to 3"
+   echo "        flag = 4  -> compare Ocean results"
+   echo "        flag = 5  -> compare Atmos results"
+   echo "        flag = 6  -> diff pickup files"
+   exit
+fi
 if test $NiAt = 0 -o $NiOc = 0
-then 
+then
     echo " needs 2 data files: 'input_ocn/data.tst' & 'input_atm/data.tst'"
     echo "  (corresponding to 1rst run) to continue"
   exit
 fi
-ksel=$1
+arg1=$1
+xx=`echo $arg1 | sed 's/\+$//'`
+if test $xx != $arg1
+then kUp=`echo $xx | sed 's/^r//'` ; arg1=$xx
+else kUp=9 ; fi
+xx=`echo $arg1 | sed 's/^r//'`
+if test $xx != $arg1 ; then doRun=1 ; arg1=$xx ; else doRun=0 ; fi
+ksel=$arg1
+
+CMD="./${CMD} $MTH 3"
+echo " doRun='$doRun' ; ksel='$ksel' ; kUp='$kUp' ; command='$CMD'"
 
 #make sure that local dir & ~jmc/bin is in the path:
 #export PATH=${PATH}:.
@@ -97,8 +123,8 @@ noc2=`expr $noc0 + $Dbl`
 noc0c=`printf "%10.10i\n" $noc0`
 noc1c=`printf "%10.10i\n" $noc1`
 noc2c=`printf "%10.10i\n" $noc2`
-echo 'Oce (rank_1):' $noc0  $noc1  $noc2
-echo $noc0c $noc1c $noc2c
+echo ' Oce (rank_1):' $noc0  $noc1  $noc2
+echo ' ' $noc0c $noc1c $noc2c
 
 Nit=$NiAt
 Dbl=`expr $Nit + $Nit`
@@ -107,8 +133,8 @@ nat2=`expr $nat0 + $Dbl`
 nat0c=`printf "%10.10i\n" $nat0`
 nat1c=`printf "%10.10i\n" $nat1`
 nat2c=`printf "%10.10i\n" $nat2`
-echo 'Atm (rank_2):' $nat0  $nat1  $nat2
-echo $nat0c $nat1c $nat2c
+echo ' Atm (rank_2):' $nat0  $nat1  $nat2
+echo ' ' $nat0c $nat1c $nat2c
 
 listOc="pickup"
 listAt="pickup pickup_cpl pickup_ic pickup_land"
@@ -132,7 +158,7 @@ then
  done
  cd ..
 #-- prepare for running Dbl
- echo ' prepare for running Dbl:'
+ echo '=> prepare for running Dbl:'
  Dbl=`expr $NiOc + $NiOc`
  sed "1 s/[0-9]*/$Dbl/" input_cpl/data > rank_0/data
  cp -p input_ocn/data.tst rank_1/data
@@ -141,12 +167,20 @@ then
  egrep 'nIter0|nTimeSteps' rank_?/data
 fi
 
-#-- after running Dbl:
-if test $ksel = 1
+#-- run & post-process Dbl:
+if [ $ksel -eq 1 -o $kUp -le 1 ]
 then
+ echo ' '
+#-- run coupled test (Dbl):
+ if [ $doRun -eq 1 -o $kUp -lt 1 ]
+ then
+   echo "=> run (Dbl): $CMD"
+   $CMD
+ fi
+#-- after running Dbl:
  rm -rf $dir1
  mkdir $dir1
- echo ' ' ; echo 'move STDOUT to' $dir1
+ echo '=> move STDOUT to' $dir1
  mv rank_1/STDOUT* $dir1/ocnSTDOUT.2it
  mv rank_2/STDOUT* $dir1/atmSTDOUT.2it
 
@@ -171,7 +205,7 @@ then
  cd ..
 
 #-- prepare for running 1iA
- echo ' prepare for running 1iA:'
+ echo '=> prepare for running 1iA:'
  Nit=$NiOc
  Dbl=`expr $Nit + $Nit`
  sed "1 s/[0-9]*/$Nit/" input_cpl/data > rank_0/data
@@ -183,12 +217,20 @@ then
  egrep 'nIter0|nTimeSteps' rank_?/data
 fi
 
-#-- after running 1iA
-if test $ksel = 2
+#-- run & post-process 1iA:
+if [ $ksel -eq 2 -o $kUp -le 2 ]
 then
+ echo ' '
+#-- run coupled test (1iA):
+ if [ $doRun -eq 1 -o $kUp -lt 2 ]
+ then
+   echo "=> run (1iA): $CMD"
+   $CMD
+ fi
+#-- after running 1iA
  rm -rf $dir2
  mkdir $dir2
- echo ' ' ; echo 'move STDOUT to' $dir2
+ echo '=> move STDOUT to' $dir2
  mv rank_1/STDOUT* $dir2/ocnSTDOUT.1iA
  mv rank_2/STDOUT* $dir2/atmSTDOUT.1iA
 
@@ -213,7 +255,7 @@ then
  cd ..
 
 #-- prepare for running 1iB
- echo ' prepare for running 1iB:'
+ echo '=> prepare for running 1iB:'
  cd rank_1
  sed "s/^ nIter0=$noc0/ nIter0=$noc1/g" data > data.tmp
  mv -f data.tmp data
@@ -227,12 +269,20 @@ then
  egrep 'nIter0|nTimeSteps' rank_?/data
 fi
 
-#-- after running 1iB
-if test $ksel = 3
+#-- run & post-process 1iB:
+if [ $ksel -eq 3 -o $kUp -le 3 ]
 then
+ echo ' '
+#-- run coupled test (1iB):
+ if [ $doRun -eq 1 -o $kUp -lt 3 ]
+ then
+   echo "=> run (1iB): $CMD"
+   $CMD
+ fi
+#-- after running 1iB
  rm -rf $dir3
  mkdir $dir3
- echo ' ' ; echo 'move STDOUT to' $dir3
+ echo '=> move STDOUT to' $dir3
  mv rank_1/STDOUT* $dir3/ocnSTDOUT.1iB
  mv rank_2/STDOUT* $dir3/atmSTDOUT.1iB
 
@@ -255,7 +305,7 @@ then
  mv pickup*.$nat2c.* ../$dir3/atm
  rm -f pickup*.$nat1c.*
  cd ..
- echo 'restore std data files'
+ echo '=> restore std data files'
  cp -p input_cpl/data rank_0
  cp -p input_ocn/data rank_1
  cp -p input_atm/data rank_2
