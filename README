@@ -50,9 +50,9 @@ d) script: rn_pickup
 e) script: mk_mkfile
 - run genmake2 with the same options as when "Makefile" was generated
  (needs an existing previous "Makefile") ; this replaces "make makefile".
- in addition, link *_mpi files from the MODS directory when -mpi was 
+ in addition, link *_mpi files from the MODS directory when -mpi was
  used to generate the previous Makefile.
 
 f) script: derive_other_types
-  from 1 src file, derive other type (R4,RS,RL,RS) version. For now, can 
+  from 1 src file, derive other type (R4,RS,RL,RS) version. For now, can
   only be applied to the 4 src files: "mdsio_pass_r{4,8}tor{l,s}.F"
