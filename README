@@ -16,7 +16,7 @@ script: do_test_2+2
   and can only be used after a successful "testreport"
 - do_test_2+2 -help -> print "usage"
 
-NOTE: scripts "tst_2+2" & "do_test_2+2" have been moved (Dec 25, 2007) 
+NOTE: scripts "tst_2+2" & "do_test_2+2" have been moved (Dec 25, 2007)
  to: MITgcm/tools
 
 script: tst_2+2_cpl
