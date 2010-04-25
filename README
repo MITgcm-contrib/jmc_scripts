@@ -1,6 +1,6 @@
 Some basic scripts are gather here.
 
-a) the restart test : "2+2=4"
+a) the restart test: "2+2=4"
 
 script: tst_2+2
 - to use in a run dir. after a successful "testreport"
