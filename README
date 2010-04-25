@@ -44,7 +44,7 @@ matlab-script: plot_StD.m (uses read_StD.m, c_levs.m)
 
 d) script: rn_pickup
 - Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'
-  with several selection options
+  with several selection options.
 - rn_pickup (no argument) -> print "usage"
 
 e) script: mk_mkfile
