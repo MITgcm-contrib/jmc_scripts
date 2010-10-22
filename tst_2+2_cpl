@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.6 2009/09/14 18:52:21 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.7 2009/12/26 23:43:22 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -93,6 +93,7 @@ then
    echo "        flag = 4  -> compare Ocean results"
    echo "        flag = 5  -> compare Atmos results"
    echo "        flag = 6  -> diff pickup files"
+   echo "        flag = 7  -> clean-up output files"
    exit
 fi
 if test $NiAt = 0 -o $NiOc = 0
@@ -373,5 +374,33 @@ then
  do
    dif_tiles $dir1/atm $dir3/atm $xx.$nat2c
  done
+ exit
+fi
+
+#- clean-up and reset:
+if test $ksel = 7
+then
+ echo "== clean-up and reset :"
+# echo '--> remove pickup*.'$noc0c'* sym-links:'
+# cd rank_1 
+#   listS=`find . ! -name . -prune -type l -name 'pickup*.'${noc0c}'*'`
+#   if [ $prt -ge 2 ] ; then echo ' in rank_1: rm' $listS ; fi
+#   rm -f $listS
+# echo '--> remove pickup*.'$nat0c'* sym-links:'
+# cd ../rank_2
+#   listS=`find . ! -name . -prune -type l -name 'pickup*.'${nat0c}'*'`
+#   if [ $prt -ge 2 ] ; then echo ' in rank_2: rm' $listS ; fi
+#   rm -f $listS
+# cd ..
+ echo '--> remove output dir and output files:'
+ echo ' rm -rf' $dir1 $dir2 $dir3
+ rm -rf $dir1 $dir2 $dir3
+ rm -f atm.txt ocn.txt
+#- move back files from temp_tst dir:
+#if test -d $tmpDir ; then
+# echo "--> move back files from 'temp_tst' dir."
+# cd $tmpDir ; mv -f * .. ; cd ..
+# rmdir $tmpDir
+#fi
  exit
 fi
