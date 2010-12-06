@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.7 2009/12/26 23:43:22 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.8 2010/10/22 03:10:56 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -22,7 +22,7 @@ dif_tiles()
 #   dif_data_loc dd1 dd2 file
 #   for all tiles  ==> do diff dd1/file dd2/file'
     dd1=$1 ; dd2=$2 ; zz=$3
-    chkmeta='Y'
+    chkmeta='N'
     listY=`(cd $dd1 ; ls $zz.*.data | sed "s/$zz\.//" | sed "s/\.data//")`
     echo '--> file='$zz', listY='$listY
     for yy in $listY
@@ -33,37 +33,63 @@ dif_tiles()
       if test $out != 0
       then echo 'Diff outp=' $out ' ==> stop'
        exit ; fi
-      if test $chkmeta = 'Y'
-      then
+      if test $chkmeta = 'Y' ; then
        echo diff $dd1/$zz.$yy.meta $dd2
        diff $dd1/$zz.$yy.meta $dd2
        out=$?
-       if test $out != 0
-       then echo 'Diff outp=' $out ' ==> stop'
-        exit ; fi
+       if test $out != 0 ; then echo 'Diff outp=' $out ' ==> stop' ; exit ; fi
       fi
     done
 }
 
-if test -f input_ocn/data.tst
-then
+move_outp()
+{
+#   move_outp arg_1
+#   move mitgcm output files to directory 'arg_1'
+    if [ $prt -ge 1 ] ; then echo ' move_outp:' $1 ; fi
+    mv *.data *.meta $1
+    listF=`ls -1 *.txt STD???.0000 *.log 2> /dev/null`
+    if test "x$listF" != x ; then mv $listF $1 ; fi
+    #- move back sym link:
+    listL=`find $1 -type l`
+    ttd=`echo $listL | wc -w`
+    #echo "ttd=$ttd"
+    if test $ttd != 0 ; then
+      #echo "listL='$listL'"
+      shortList=`ls $listL | sed "s|$1/||"`
+      if [ $prt -ge 2 ] ; then echo "  mv back:" $shortList ; fi
+      mv $listL .
+    fi
+}
+
+#===============================================================================
+
+if test -f input_ocn/data.tst ; then
  noc0=`sed -n 's/nIter0=//p' input_ocn/data.tst | sed 's/,//g' | sed 's/ //g'`
  Dbl=`sed -n 's/nTimeSteps=//p' input_ocn/data.tst | sed 's/,//g'`
  NiOc=`expr $Dbl / 2`
  Nit=$NiOc
-else
- echo " file: 'input_ocn/data.tst' not found"
+else echo " file: 'input_ocn/data.tst' not found"
  NiOc=0 ; Nit=2
 fi
-if test -f input_atm/data.tst
-then
+if test -f input_atm/data.tst ; then
  nat0=`sed -n 's/nIter0=//p' input_atm/data.tst | sed 's/,//g' | sed 's/ //g'`
  Dbl=`sed -n 's/nTimeSteps=//p' input_atm/data.tst | sed 's/,//g'`
  NiAt=`expr $Dbl / 2`
-else
- echo " file: 'input_atm/data.tst' not found"
+else echo " file: 'input_atm/data.tst' not found"
  NiAt=0
 fi
+if test -f pr_group ; then
+ Npr=`cat pr_group | wc -l` 
+ NpOc=`grep -c '\/build_ocn\/mitgcmuv' pr_group`
+else echo " file: 'pr_group' not found"
+ Npr=0
+fi
+
+#- default:
+prt=1    # 1 = print some informations ; 2 = print more informations
+action=1
+tmpDir='temp_tst'
 
 #- parse options:
 CMD='run_cpl_test'
@@ -75,8 +101,7 @@ do
  if test -x ${CMD}_$xx ; then CMD="${CMD}_$xx" ; shift ; continue ; fi
 done
 
-if [ $# -ne 1 ]
-then
+if [ $# -ne 1 ] ; then
    echo "Usage: `basename $0` [opt] flag"
    echo " Check restart of coupled set-up: compare 1 run of 2 x $Nit it long"
    echo "                       with 2 consecutive runs of $Nit it long each"
@@ -96,11 +121,13 @@ then
    echo "        flag = 7  -> clean-up output files"
    exit
 fi
-if test $NiAt = 0 -o $NiOc = 0
-then
+if test $NiAt = 0 -o $NiOc = 0 ; then
     echo " needs 2 data files: 'input_ocn/data.tst' & 'input_atm/data.tst'"
     echo "  (corresponding to 1rst run) to continue"
   exit
+fi
+if test $Npr = 0 ; then
+    echo " needs file: 'pr_group' to continue" ; exit
 fi
 arg1=$1
 xx=`echo $arg1 | sed 's/\+$//'`
@@ -117,6 +144,7 @@ echo " doRun='$doRun' ; ksel='$ksel' ; kUp='$kUp' ; command='$CMD'"
 #make sure that local dir & ~jmc/bin is in the path:
 #export PATH=${PATH}:.
 
+rnkO=1 ; rnkA=`expr $rnkO + $NpOc`
 Nit=$NiOc
 Dbl=`expr $Nit + $Nit`
 noc1=`expr $noc0 + $Nit`
@@ -124,8 +152,8 @@ noc2=`expr $noc0 + $Dbl`
 noc0c=`printf "%10.10i\n" $noc0`
 noc1c=`printf "%10.10i\n" $noc1`
 noc2c=`printf "%10.10i\n" $noc2`
-echo ' Oce (rank_1):' $noc0  $noc1  $noc2
-echo ' ' $noc0c $noc1c $noc2c
+echo " Oce (rank_$rnkO):" $noc0  $noc1  $noc2
+echo "     " $noc0c $noc1c $noc2c
 
 Nit=$NiAt
 Dbl=`expr $Nit + $Nit`
@@ -134,8 +162,8 @@ nat2=`expr $nat0 + $Dbl`
 nat0c=`printf "%10.10i\n" $nat0`
 nat1c=`printf "%10.10i\n" $nat1`
 nat2c=`printf "%10.10i\n" $nat2`
-echo ' Atm (rank_2):' $nat0  $nat1  $nat2
-echo ' ' $nat0c $nat1c $nat2c
+echo " Atm (rank_$rnkA):" $nat0  $nat1  $nat2
+echo "     " $nat0c $nat1c $nat2c
 
 listOc="pickup"
 listAt="pickup pickup_cpl pickup_ic pickup_land"
@@ -145,36 +173,57 @@ dir1=res_2it
 dir2=res_1iA
 dir3=res_1iB
 
-#-- after a run, rename pickup file to restart
-if test $ksel = 0
-then
+#---- clean up current dir: rename pickup files and move output to temp_tst dir:
+if test $ksel = 0 ; then
+ /bin/rm -rf $tmpDir.0 $tmpDir.1 $tmpDir.2
+ mkdir $tmpDir.0 $tmpDir.1 $tmpDir.2
+ mv std_outp rank_0/*.clog rank_0/data $tmpDir.0
  echo ' '
- cd rank_1
+ cd rank_$rnkO
  for xx in $listOc
  do rnp_loc $xx.ckptA $xx.$noc0c
  done
- cd ../rank_2
+ move_outp ../$tmpDir.1
+ mv data ../$tmpDir.1
+ mv *.0001.clog ../$tmpDir.0
+#-- link back pickup files
+ sufx=$noc0c
+ listS=`ls ../$tmpDir.1/pickup*.${sufx}.* 2> /dev/null | head -1`
+ if test "x$listS" != x ; then
+   if [ $prt -ge 1 ] ; then echo ' link back:' ../$tmpDir'.1/pickup*.'${sufx}'*' ; fi
+   if test $action = 1 ; then ln -s ../$tmpDir.1/pickup*.${sufx}* . ; fi
+ fi
+ cd ..
+ cd rank_$rnkA
  for xx in $listAt
  do rnp_loc $xx.ckptA $xx.$nat0c
  done
+ move_outp ../$tmpDir.2
+ mv data ../$tmpDir.2
+ mv *.0001.clog ../$tmpDir.0
+#-- link back pickup files
+ sufx=$nat0c
+ listS=`ls ../$tmpDir.2/pickup*.${sufx}.* 2> /dev/null | head -1`
+ if test "x$listS" != x ; then
+   if [ $prt -ge 1 ] ; then echo ' link back:' ../$tmpDir'.2/pickup*.'${sufx}'*' ; fi
+   if test $action = 1 ; then ln -s ../$tmpDir.2/pickup*.${sufx}* . ; fi
+ fi
  cd ..
 #-- prepare for running Dbl
  echo '=> prepare for running Dbl:'
  Dbl=`expr $NiOc + $NiOc`
  sed "1 s/[0-9]*/$Dbl/" input_cpl/data > rank_0/data
- cp -p input_ocn/data.tst rank_1/data
- cp -p input_atm/data.tst rank_2/data
+ cp -p input_ocn/data.tst rank_$rnkO/data
+ cp -p input_atm/data.tst rank_$rnkA/data
  echo 'rank_0/data:' `head -1 rank_0/data`
- egrep 'nIter0|nTimeSteps' rank_?/data
+ egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #-- run & post-process Dbl:
-if [ $ksel -eq 1 -o $kUp -le 1 ]
-then
+if [ $ksel -eq 1 -o $kUp -le 1 ] ; then
  echo ' '
 #-- run coupled test (Dbl):
- if [ $doRun -eq 1 -o $kUp -lt 1 ]
- then
+ if [ $doRun -eq 1 -o $kUp -lt 1 ] ; then
    echo "=> run (Dbl): $CMD"
    $CMD
  fi
@@ -182,27 +231,28 @@ then
  rm -rf $dir1
  mkdir $dir1
  echo '=> move STDOUT to' $dir1
- mv rank_1/STDOUT* $dir1/ocnSTDOUT.2it
- mv rank_2/STDOUT* $dir1/atmSTDOUT.2it
+ mv std_outp rank_0/*.0000.clog rank_$rnkO/*.0001.clog rank_$rnkA/*.0001.clog $dir1
+ mv rank_$rnkO/STDOUT.0000 $dir1/ocnSTDOUT.0000
+ mv rank_$rnkA/STDOUT.0000 $dir1/atmSTDOUT.0000
 
  mkdir $dir1/ocn
- cd rank_1
+ cd rank_$rnkO
  for xx in $listOc
  do
   rnp_loc $xx.ckptA $xx.$noc2c
  done
- echo 'move pickups to' $dir1/ocn
- mv pickup*.$noc2c.* ../$dir1/ocn
+ echo 'move output to' $dir1/ocn
+ move_outp  ../$dir1/ocn
  cd ..
 
  mkdir $dir1/atm
- cd rank_2
+ cd rank_$rnkA
  for xx in $listAt
  do
   rnp_loc $xx.ckptA $xx.$nat2c
  done
- echo 'move pickups to' $dir1/atm
- mv pickup*.$nat2c.* ../$dir1/atm
+ echo 'move output to' $dir1/atm
+ move_outp  ../$dir1/atm
  cd ..
 
 #-- prepare for running 1iA
@@ -210,21 +260,19 @@ then
  Nit=$NiOc
  Dbl=`expr $Nit + $Nit`
  sed "1 s/[0-9]*/$Nit/" input_cpl/data > rank_0/data
- sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_ocn/data.tst > rank_1/data
+ sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_ocn/data.tst > rank_$rnkO/data
  Nit=$NiAt
  Dbl=`expr $Nit + $Nit`
- sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_atm/data.tst > rank_2/data
+ sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$Nit/g" input_atm/data.tst > rank_$rnkA/data
  echo 'rank_0/data:' `head -1 rank_0/data`
- egrep 'nIter0|nTimeSteps' rank_?/data
+ egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #-- run & post-process 1iA:
-if [ $ksel -eq 2 -o $kUp -le 2 ]
-then
+if [ $ksel -eq 2 -o $kUp -le 2 ] ; then
  echo ' '
 #-- run coupled test (1iA):
- if [ $doRun -eq 1 -o $kUp -lt 2 ]
- then
+ if [ $doRun -eq 1 -o $kUp -lt 2 ] ; then
    echo "=> run (1iA): $CMD"
    $CMD
  fi
@@ -232,51 +280,54 @@ then
  rm -rf $dir2
  mkdir $dir2
  echo '=> move STDOUT to' $dir2
- mv rank_1/STDOUT* $dir2/ocnSTDOUT.1iA
- mv rank_2/STDOUT* $dir2/atmSTDOUT.1iA
+ mv std_outp rank_0/*.clog rank_$rnkO/*.clog rank_$rnkA/*.clog $dir2
+ mv rank_$rnkO/STDOUT.0000 $dir2/ocnSTDOUT.0000
+ mv rank_$rnkA/STDOUT.0000 $dir2/atmSTDOUT.0000
 
  mkdir $dir2/ocn
- cd rank_1
+ cd rank_$rnkO
  for xx in $listOc
  do
   rnp_loc $xx.ckptA $xx.$noc1c
  done
- echo 'move pickups to' $dir2/ocn
- mv pickup*.$noc1c.* ../$dir2/ocn
+# remove pickup*.$noc0c* sym-link:
+ find . ! -name . -prune -type l -name 'pickup*.'${noc0c}'*' -exec rm {} \;
+ echo 'move output to' $dir2/ocn
+ move_outp  ../$dir2/ocn
  cd ..
 
  mkdir $dir2/atm
- cd rank_2
+ cd rank_$rnkA
  for xx in $listAt
  do
   rnp_loc $xx.ckptA $xx.$nat1c
  done
- echo 'move pickups to' $dir2/atm
- mv pickup*.$nat1c.* ../$dir2/atm
+# remove pickup*.$nat0c* sym-link:
+ find . ! -name . -prune -type l -name 'pickup*.'${nat0c}'*' -exec rm {} \;
+ echo 'move output to' $dir2/atm
+ move_outp  ../$dir2/atm
  cd ..
 
 #-- prepare for running 1iB
  echo '=> prepare for running 1iB:'
- cd rank_1
+ cd rank_$rnkO
+ ln -s ../$dir2/ocn/pickup*.$noc1c.* .
  sed "s/^ nIter0=$noc0/ nIter0=$noc1/g" data > data.tmp
  mv -f data.tmp data
- ln -s ../$dir2/ocn/* .
- cd ../rank_2
+ cd ../rank_$rnkA
+ ln -s ../$dir2/atm/pickup*.$nat1c.* .
  sed "s/^ nIter0=$nat0/ nIter0=$nat1/g" data > data.tmp
  mv -f data.tmp data
- ln -s ../$dir2/atm/* .
  cd ..
  echo 'rank_0/data:' `head -1 rank_0/data`
- egrep 'nIter0|nTimeSteps' rank_?/data
+ egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #-- run & post-process 1iB:
-if [ $ksel -eq 3 -o $kUp -le 3 ]
-then
+if [ $ksel -eq 3 -o $kUp -le 3 ] ; then
  echo ' '
 #-- run coupled test (1iB):
- if [ $doRun -eq 1 -o $kUp -lt 3 ]
- then
+ if [ $doRun -eq 1 -o $kUp -lt 3 ] ; then
    echo "=> run (1iB): $CMD"
    $CMD
  fi
@@ -284,49 +335,48 @@ then
  rm -rf $dir3
  mkdir $dir3
  echo '=> move STDOUT to' $dir3
- mv rank_1/STDOUT* $dir3/ocnSTDOUT.1iB
- mv rank_2/STDOUT* $dir3/atmSTDOUT.1iB
+ mv std_outp rank_0/*.clog rank_$rnkO/*.clog rank_$rnkA/*.clog $dir3
+ mv rank_$rnkO/STDOUT.0000 $dir3/ocnSTDOUT.0000
+ mv rank_$rnkA/STDOUT.0000 $dir3/atmSTDOUT.0000
 
  mkdir $dir3/ocn
- cd rank_1
+ cd rank_$rnkO
  for xx in $listOc
  do rnp_loc $xx.ckptA $xx.$noc2c
  done
- echo 'move pickups to' $dir3/ocn
- mv pickup*.$noc2c.* ../$dir3/ocn
- rm -f pickup*.$noc1c.*
+# remove pickup*.$noc1c* sym-link:
+ find . ! -name . -prune -type l -name 'pickup*.'${noc1c}'*' -exec rm {} \;
+ echo 'move output to' $dir3/ocn
+ move_outp  ../$dir3/ocn
  cd ..
 
  mkdir $dir3/atm
- cd rank_2
+ cd rank_$rnkA
  for xx in $listAt
  do rnp_loc $xx.ckptA $xx.$nat2c
  done
- echo 'move pickups to' $dir3/atm
- mv pickup*.$nat2c.* ../$dir3/atm
- rm -f pickup*.$nat1c.*
+# remove pickup*.$nat1c* sym-link:
+ find . ! -name . -prune -type l -name 'pickup*.'${nat1c}'*' -exec rm {} \;
+ echo 'move output to' $dir3/atm
+ move_outp  ../$dir3/atm
  cd ..
- echo '=> restore std data files'
- cp -p input_cpl/data rank_0
- cp -p input_ocn/data rank_1
- cp -p input_atm/data rank_2
 fi
 
 #-- compare output:
-if test $ksel = 4
-then
+if test $ksel = 4 ; then
  rm -f ocn.txt
  echo ' run 2it: ---------- ' > tmp1.txt
- grep "cg2d_init_res" $dir1/ocnSTDOUT.2it \
+ grep "cg2d_init_res" $dir1/ocnSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  Nit=`expr $NiOc + 2`
+ echo "NiOc= $NiOc ; Nit= $Nit"
  sed "$Nit i \ ... 2it continue ..." tmp1.txt > tmp2.txt
  rm -f tmp1.txt
  echo ' run 1iA: ---------- ' > tmp1.txt
- grep "cg2d_init_res" $dir2/ocnSTDOUT.1iA \
+ grep "cg2d_init_res" $dir2/ocnSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  echo ' run 1iB: ---------- ' >> tmp1.txt
- grep "cg2d_init_res" $dir3/ocnSTDOUT.1iB \
+ grep "cg2d_init_res" $dir3/ocnSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  nl tmp1.txt > tmp1.ttt
  nl tmp2.txt > tmp2.ttt
@@ -337,20 +387,19 @@ then
  exit
 fi
 
-if test $ksel = 5
-then
+if test $ksel = 5 ; then
  rm -f atm.txt
  echo ' run 2it: ---------- ' > tmp1.txt
- grep "cg2d_init_res" $dir1/atmSTDOUT.2it \
+ grep "cg2d_init_res" $dir1/atmSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  Nit=`expr $NiAt + 2`
  sed "$Nit i \ ... 2it continue ..." tmp1.txt > tmp2.txt
  rm -f tmp1.txt
  echo ' run 1iA: ---------- ' > tmp1.txt
- grep "cg2d_init_res" $dir2/atmSTDOUT.1iA \
+ grep "cg2d_init_res" $dir2/atmSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  echo ' run 1iB: ---------- ' >> tmp1.txt
- grep "cg2d_init_res" $dir3/atmSTDOUT.1iB \
+ grep "cg2d_init_res" $dir3/atmSTDOUT.0000 \
       | sed 's/.* cg2d_init_res =//' >> tmp1.txt
  nl tmp1.txt > tmp1.ttt
  nl tmp2.txt > tmp2.ttt
@@ -362,8 +411,7 @@ then
 fi
 
 #- compare pickup file:
-if test $ksel = 6
-then
+if test $ksel = 6 ; then
  echo ' ' ; echo '=== compare Ocn pickups: =============='
  for xx in $listOc
  do
@@ -378,29 +426,30 @@ then
 fi
 
 #- clean-up and reset:
-if test $ksel = 7
-then
+if test $ksel = 7 ; then
  echo "== clean-up and reset :"
-# echo '--> remove pickup*.'$noc0c'* sym-links:'
-# cd rank_1 
-#   listS=`find . ! -name . -prune -type l -name 'pickup*.'${noc0c}'*'`
-#   if [ $prt -ge 2 ] ; then echo ' in rank_1: rm' $listS ; fi
-#   rm -f $listS
-# echo '--> remove pickup*.'$nat0c'* sym-links:'
-# cd ../rank_2
-#   listS=`find . ! -name . -prune -type l -name 'pickup*.'${nat0c}'*'`
-#   if [ $prt -ge 2 ] ; then echo ' in rank_2: rm' $listS ; fi
-#   rm -f $listS
-# cd ..
- echo '--> remove output dir and output files:'
- echo ' rm -rf' $dir1 $dir2 $dir3
- rm -rf $dir1 $dir2 $dir3
- rm -f atm.txt ocn.txt
+#echo '--> remove pickup*.'$noc0c'* sym-links:'
+#cd rank_$rnkO
+#  listS=`find . ! -name . -prune -type l -name 'pickup*.'${noc0c}'*'`
+#  if [ $prt -ge 2 ] ; then echo " in rank_$rnkO: rm" $listS ; fi
+#  rm -f $listS
+#echo '--> remove pickup*.'$nat0c'* sym-links:'
+#cd ../rank_$rnkA
+#  listS=`find . ! -name . -prune -type l -name 'pickup*.'${nat0c}'*'`
+#  if [ $prt -ge 2 ] ; then echo " in rank_$rnkA: rm" $listS ; fi
+#  rm -f $listS
+#cd ..
 #- move back files from temp_tst dir:
-#if test -d $tmpDir ; then
-# echo "--> move back files from 'temp_tst' dir."
-# cd $tmpDir ; mv -f * .. ; cd ..
-# rmdir $tmpDir
-#fi
+ echo '=> restore std data files'
+ rm -f rank_0/data  rank_$rnkO/data rank_$rnkA/data
+ mv $tmpDir.0/*Ocean.0001.clog $tmpDir.1/* rank_$rnkO
+ mv $tmpDir.0/*Atmos.0001.clog $tmpDir.2/* rank_$rnkA
+ mv $tmpDir.0/std_outp .
+ mv $tmpDir.0/* rank_0
+ rmdir $tmpDir.0 $tmpDir.1 $tmpDir.2
+#echo '--> remove output dir and output files:'
+#echo ' rm -rf' $dir1 $dir2 $dir3
+#rm -rf $dir1 $dir2 $dir3
+#rm -f atm.txt ocn.txt
  exit
 fi
