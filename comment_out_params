@@ -1,0 +1,68 @@
+#! /usr/bin/env bash
+#
+# $Header: /u/gcmpack/MITgcm/tools/calc_diagnostics_dims,v 1.1 2004/02/13 06:05:49 edhill Exp $
+# $Name:  $
+
+#  The purpose of this script is to modify parameter files
+#   by commenting out lines which set a given parameter
+
+usage()
+{
+    cat <<EOF
+
+Usage:  $0  params  data_file_list
+where:
+  params         : is the name of the parameter to comment out
+  data_file_list : is the list of parameter file to process
+
+EOF
+}
+
+COMMANDL="$0 $@"
+
+if [ $# -lt 2 ] ; then
+  if test "x$1" != 'x-h' -a "x$1" != 'x-help' ; then
+    echo ""
+    echo "ERROR: Need to specify 1 parameter and (at least) 1 file to modify"
+  fi
+  usage ; exit
+fi
+VAR_NAME="$1"
+shift
+DATA_FILES=$*
+
+prt=1		# 0 : no print ; 1 print modified file ; 2 more printing
+tmpFile=TTT.$$
+
+for ff in $DATA_FILES
+do
+  if test -f $ff ; then
+    if [ $prt -ge 2 ] ; then echo ' processing file:' $ff ; fi
+    flag=0
+#- comment out (in $ff) all parameters from list: 'VAR_NAME'
+    for yy in $VAR_NAME
+    do
+      if [ $prt -ge 2 ] ; then echo -n '  commenting out:' $yy ; fi
+      nn=`grep -i -c "^ *$yy *=" $ff`
+      if [ $nn -ge 1 ]
+      then
+        listN=`grep -i -n "^ *$yy *=" $ff | sed 's/:.*$//'`
+        if [ $prt -ge 2 ] ; then echo " : found on line: $listN" ; fi
+        for ll in $listN
+        do
+          if test $flag = 0 ; then cp -p -f $ff $ff.bak ; fi
+          sed "$ll s/^./#&/" $ff > $tmpFile
+         #diff $tmpFile $ff
+          mv -f  $tmpFile $ff
+          flag=1
+        done
+      else if [ $prt -ge 2 ] ; then echo ' : not found' ; fi
+      fi
+    done
+    if [ $prt -ge 1 -a $flag -eq 1 ] ; then
+      echo ' change file:' $ff
+    fi
+  else
+    if [ $prt -ge 1 ] ; then echo " file '$ff' not found" ; fi
+  fi
+done
