@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $Header: /u/gcmpack/MITgcm/verification/cpl_aim+ocn/run_cpl_test_itrda,v 1.13 2009/12/26 01:58:17 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/run_cpl_test.aces,v 1.1 2010/12/06 02:56:35 jmc Exp $
 # $Name:  $
 
 #- default:
@@ -58,6 +58,7 @@ else nprc=`wc -l $PBS_NODEFILE | awk '{print $1}'`
   exit 8
  fi
 fi
+umask 0022
 
 #============================================================================
 
