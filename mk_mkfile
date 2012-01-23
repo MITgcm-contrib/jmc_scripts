@@ -1,14 +1,17 @@
 #! /usr/bin/env bash
 
+# $Header:  $
+# $Name:  $
+
 mkfile='Makefile'
-if [ $# -ge 1 ] ; then 
+if [ $# -ge 1 ] ; then
   if test $1 = '-h' ; then
     echo "Usage: `basename $0` MAKEFILE (default: 'Makefile') ; [-h] print this"
     exit 9
   fi
   mkfile=$1
 fi
-  
+
 if test ! -f $mkfile ; then
   echo "`basename $0` error: missing file '$mkfile'"
   exit 8
@@ -39,10 +42,10 @@ do
       continue
   fi
   if [ $n1 -eq 0 -a $dbq -eq 1 ] ; then
-    if [ $n2 -eq 1 ] ; then 
-      n1=$dbq ; dbq=0 
+    if [ $n2 -eq 1 ] ; then
+      n1=$dbq ; dbq=0
       xx="$keep $xx"
-    else 
+    else
       keep="$keep $xx"
       continue
     fi
@@ -59,10 +62,10 @@ do
       continue
   fi
   if [ $n1 -eq 0 -a $sgq -eq 1 ] ; then
-    if [ $n2 -eq 1 ] ; then 
-      n1=$sgq ; sgq=0 
+    if [ $n2 -eq 1 ] ; then
+      n1=$sgq ; sgq=0
       xx="$keep $xx"
-    else 
+    else
       keep="$keep $xx"
       continue
     fi
@@ -98,12 +101,12 @@ do
       continue
   fi
   case $arg in
-   -mpi | --mpi | -mpi=* | --mpi=* ) 
+   -mpi | --mpi | -mpi=* | --mpi=* )
       MPI=`expr $MPI + 1` ;;
-   -mods | --mods | -mo | --mo ) 
+   -mods | --mods | -mo | --mo )
       prev=MODS
       flg=`expr $flg + 1` ;;
-   -mods=* | --mods=* | -mo=* | --mo=* ) 
+   -mods=* | --mods=* | -mo=* | --mo=* )
       MODS=$opt
       flg=`expr $flg + 1` ;;
     *) ;;
@@ -159,10 +162,12 @@ for d in $MODS ; do
 	    fi
 	  else
 	  # YES: We symbolically link this file (with conditions if already there)
+	    src="$d/$ii"
+	    if test $name = "SIZE.h" -a -f SIZE.h.mpi ; then src="SIZE.h.mpi" ; fi
 	    if test -L $name ; then
-	      cmp $d/$ii $name > /dev/null 2>&1
+	      cmp $src $name > /dev/null 2>&1
 	      RETVAL=$?
-	      yy=0 ; 
+	      yy=0 ;
 	      for xx in $MPI_LNKF ; do if test $xx = $name ; then yy=1 ; fi ; done
  	      if test "x$RETVAL" != x0 -a $yy = 0 ; then
 	      # remove sym-link if different and has not just been linked
@@ -176,8 +181,8 @@ for d in $MODS ; do
 	    fi
 	    if ! test -f $name ; then
 	      # make sym-link and keep record of it
-		printf "Linking $ii to $name ; "
-		ln -sf $d/$ii $name
+		printf "Linking $src to $name ; "
+		ln -sf $src $name
 		MPI_LNKF="$MPI_LNKF $name"
 	    fi
 	  fi
