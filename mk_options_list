@@ -1,0 +1,88 @@
+#! /usr/bin/env bash
+#
+# $Header:  $
+# $Name:  $
+
+# generate list of CPP Options used in Fortran source files 
+#                  arguments = list of Fortran source files
+
+clean=1
+listOpt='TTT.listOpt'
+get_sd='options_get.sed'
+sortsd='options_sort.sed'
+tmpfil=TTT.$$
+#echo $tmpfil
+
+if [ $# -eq 0 ] ; then
+  echo "Usage: `basename $0` {list_of_files}"
+  echo "   generate list of CPP Options used in all the Fortran source files" 
+  echo "   which are given in argument list {list_of_files}" 
+  echo " or  : `basename $0` -clean"
+  echo "   just clean-up temp files"
+  exit
+fi
+if test $1 = '-clean' ; then
+  LIST=`ls -C $get_sd $sortsd $listOpt 2>/dev/null` 
+  #echo "LIST='$LIST'"
+  if test "x$LIST" != x ; then
+    echo " remove: $LIST" ; rm -f $LIST
+  else
+    echo " no file to remove"
+  fi
+  exit 
+fi
+
+
+if [ $clean -ge 3 ] ; then rm -f $get_sd $sortsd ; fi
+if test -f $get_sd ; then ls -l $get_sd
+else
+cat <<EOF >> $get_sd
+/^#.*\\\\ *$/{N
+s/\\\\//
+p
+}
+EOF
+fi
+if test -f $sortsd ; then ls -l $sortsd
+else
+cat <<EOF >> $sortsd
+/^ccc /d
+s/^# *ifndef//
+s/^# *ifdef//
+s/^# *if//
+s/^# *elif//
+s/||//g
+s/&&//g
+s/(//g
+s/)//g
+s/defined//g
+s/!//g
+EOF
+fi
+
+rm -f $listOpt
+for xx in $*
+do
+  echo "ccc start file: $xx -----------------" >> $listOpt
+  sed -n '/^ .*\\ *$/p' $xx  | sed 's/\\ *$//' >> $listOpt
+  echo "ccc above: between cont line | below: 1rst and last of cont line" >> $listOpt
+  sed '/^ .*\\ *$/d' $xx  > $tmpfil
+  sed -n -f $get_sd $tmpfil >>  $listOpt
+  echo "ccc below: single line" >> $listOpt
+  sed '/^# *e*l*if.*\\ *$/d' $tmpfil | sed -n '/^# *e*l*if/p' >> $listOpt
+  echo "ccc end file: $xx   -----------------" >> $listOpt
+  rm -f $tmpfil
+done
+LIST=`sed -f $sortsd $listOpt`
+if [ $clean -ge 2 ] ; then 
+  rm -f $listOpt
+fi
+
+for xx in $LIST
+do
+  echo $xx >> $tmpfil
+done
+
+echo "-- used CPP options:"
+cat $tmpfil | sort | uniq
+if [ $clean -ge 1 ] ; then rm -f $tmpfil ; fi

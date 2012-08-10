@@ -56,3 +56,6 @@ e) script: mk_mkfile
 f) script: derive_other_types
   from 1 src file, derive other type (R4,RS,RL,RS) version. For now, can
   only be applied to the 4 src files: "mdsio_pass_r{4,8}tor{l,s}.F"
+
+g) script: mk_options_list
+  generate list of CPP Options used in Fortran source files 
