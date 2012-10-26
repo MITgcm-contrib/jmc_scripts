@@ -13,7 +13,7 @@
 #         using executable compiled with gfortran (and OpenMPI if using MPI)
 #         and running on /data/ disk(/net/eaps-80-11/data/)
 
-# $Header: /u/gcmpack/MITgcm/tools/example_scripts/ACESgrid/test_aces_gnu_mpi,v 1.10 2012/08/26 18:07:38 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/run_gnu.pbs,v 1.1 2012/10/25 21:17:10 jmc Exp $
 # $Name:  $
 
 sfx=1    # directory suffix
@@ -26,7 +26,7 @@ fi
 
 HERE=`pwd`
 echo "start from HERE='$HERE' at: "`date`
-echo " sfx=$sfx , mpi=$mpi , mth=$mth"
+echo " sfx=$sfx , mpi=$mpi , mth=$mth , host="`hostname`
 
 #- dir where to run mitgcmuv (batch job starts in home dir; need to "cd" to run dir):
 runD="/net/eaps-80-11/data/jm_c/exp/atm_gray/run_$sfx"
@@ -40,26 +40,29 @@ umask 0022
 #- to get case insensitive "ls" (and order of tested experiments)
 export LC_ALL="en_US.UTF-8"
 
+if [ $mth -ge 1 ] ; then
+ export OMP_NUM_THREADS=$mth
+ export GOMP_STACKSIZE=400m
+fi
+
  module add gcc
 if test $mpi = 0 ; then
  EXE="./mitgcmuv > std_outp"
 else
  module add openmpi
+ EXE="mpirun -v"
+ if [ $mth -ge 1 ] ; then EXE="$EXE -x OMP_NUM_THREADS -x GOMP_STACKSIZE" ; fi
+ #- select which MPI procs to use
  nn=`cat $PBS_NODEFILE | sort | uniq | wc -l`
  if [ $nn -gt 1 ] ; then dd=`expr $mpi % $nn` ; else dd=1 ; fi
  if [ $dd -eq 0 ] ; then
    npn=`expr $mpi / $nn`
    echo " Nb of nodes=$nn , nb of process per node=$npn"
    cat $PBS_NODEFILE | sort | uniq > mf
-   EXE="mpirun -v -hostfile mf -npernode $npn ./mitgcmuv"
+   EXE="$EXE -hostfile mf -npernode $npn ./mitgcmuv"
  else
-   EXE="mpirun -v -np $mpi ./mitgcmuv"
+   EXE="$EXE -np $mpi ./mitgcmuv"
  fi
-fi
-
-if [ $mth -ge 1 ] ; then
- export OMP_NUM_THREADS=$mth
- export GOMP_STACKSIZE=400m
 fi
 
 echo "list of loaded modules:"
