@@ -5,7 +5,7 @@
 %-
 %namA(2)={'r16a'};
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.2 2008/10/08 18:18:04 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.3 2008/11/08 18:26:09 jmc Exp $
 % $Name:  $
 
 
@@ -21,12 +21,11 @@ else
 end
 if krd > 0,
 %- define list of fields to read in:
- clear listV ;
 %listV={'Eta','U','V','W','T','S','DETADT2','RELHUM','Phi'};
- listV={'Eta','W','T','S','CONVADJ','DETADT2'};
+%listV={'Eta','W','T','S','CONVADJ','DETADT2'};
 %listV={'Eta','UE_VEL_C','VN_VEL_C','W','T','DETADT2','Phi'};
 %- or take all them:
-%clear listV ; listV='all_flds';
+ clear listV ; listV='all_flds';
 %-----------
 
 %- start to read the longest record:
@@ -66,7 +65,8 @@ elseif krd < 0,
 end
 if krd ~= 0,
  ttA=squeeze(tiA(:,2,:));
- ttA=ttA/86400; titT='days'; ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
+ ttA=ttA/3600; titT='hrs';  ttA=ttA/24; titT='days';
+ ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
 end
 %=========================================================
 

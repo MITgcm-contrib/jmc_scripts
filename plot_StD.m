@@ -1,9 +1,9 @@
- prefix='stDiag';
- namA='r527'; 
+ prefix='dynStD';
+ namA='r527';
  Nexp=1; Nc=size(namA,2);
 %--
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.1 2008/05/29 23:47:13 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/plot_StD.m,v 1.1 2008/10/08 18:18:04 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -64,7 +64,8 @@ elseif krd < 0,
 end
 if krd ~= 0,
  ttA=squeeze(tiA(:,2,:));
- ttA=ttA/86400; titT='days'; %ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
+ ttA=ttA/3600; titT='hrs';  ttA=ttA/24; titT='days';
+ ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
 end
 %=========================================================
 
@@ -165,7 +166,10 @@ for ng=1:nbV,
     subplot(410+nv);
     var=squeeze(vv1(2:nk,:,1,nv,n))';
     mnV=min(var(:)); MxV=max(var(:)); ccv=c_levs(mnV,MxV,-12);
-    [cs,h]=contour(ttA(isA(n):ieA(n),n),[1:nk-1],var(isA(n):ieA(n),:)',ccv);
+   %- pressure coordinate, from bottom (k=1) to top (k=nr=nk-1)
+   %[cs,h]=contour(ttA(isA(n):ieA(n),n),[1:nk-1],var(isA(n):ieA(n),:)',ccv);
+   %- z coordinate, from bottom (k=nr=nk-1) to top (k=1)
+    [cs,h]=contour(ttA(isA(n):ieA(n),n),-[1:nk-1],var(isA(n):ieA(n),:)',ccv);
    %clabel(cs);isoline0(h);
     colorbar;
     if nv == 1, title(['Avr ',titv]); end
