@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.10 2010/12/08 18:23:25 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.11 2012/08/16 23:08:56 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -281,7 +281,7 @@ if test $ksel = 0 ; then
 #---- clean up current dir: rename pickup files and move output to temp_tst dir:
  /bin/rm -rf $tmpDir.0 $tmpDir.1 $tmpDir.2
  mkdir $tmpDir.0 $tmpDir.1 $tmpDir.2
- mv std_outp rank_0/*.clog rank_0/data $tmpDir.0
+ mv std_outp rank_0/*.clog $tmpDir.0
  mv rank_$rnkO/*.0001.clog $tmpDir.0
  mv rank_$rnkA/*.0001.clog $tmpDir.0
  echo ' '
@@ -292,10 +292,8 @@ if test $ksel = 0 ; then
 #-- prepare for running Dbl
  echo '=> prepare for running Dbl:'
  Dbl=`expr $NiOc + $NiOc`
- sed "1 s/[0-9]*/$Dbl/" input_cpl/data > rank_0/data
  cp -p rank_$rnkO/data.tst rank_$rnkO/data
  cp -p rank_$rnkA/data.tst rank_$rnkA/data
- echo 'rank_0/data:' `head -1 rank_0/data`
  egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
@@ -392,13 +390,11 @@ if [ $ksel -eq 1 -o $kUp -le 1 ] ; then
 #-- prepare for running 1iA
  echo '=> prepare for running 1iA:'
  nit=$NiOc ; Dbl=`expr $nit + $nit`
- sed "1 s/[0-9]*/$nit/" input_cpl/data > rank_0/data
  pFile=rank_$rnkO/data
  sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$nit/g" $pFile.tst > $pFile
  nit=$NiAt ; Dbl=`expr $nit + $nit`
  pFile=rank_$rnkA/data
  sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$nit/g" $pFile.tst > $pFile
- echo 'rank_0/data:' `head -1 rank_0/data`
  egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
@@ -458,7 +454,6 @@ if [ $ksel -eq 2 -o $kUp -le 2 ] ; then
  sed "s/^ nIter0=$nat0/ nIter0=$nat1/g" data > data.tmp_$$
  mv -f data.tmp_$$ data
  cd ..
- echo 'rank_0/data:' `head -1 rank_0/data`
  egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
