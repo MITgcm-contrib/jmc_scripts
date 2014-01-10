@@ -4,7 +4,7 @@ function [ctl]=c_levs(mn,Mx,dc,dBug);
 %  dc > 0 : select contour-levels as multiple of "dc" within [mn,Mx]
 %  dc < 0 : select aproximatively |dc| contour levels, within [mn,Mx]
 
-% $Header:  $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/c_levs.m,v 1.1 2008/10/09 01:08:27 jmc Exp $
 % $Name:  $
 
 if nargin < 3,
@@ -17,13 +17,16 @@ if dc > 0,
   dd=dc;
 else
   d0=(mn-Mx)/dc;
-  k0=log(d0)/log(10); 
-  kd=round(k0); 
-  pp=10.^kd; 
+  if d0 <= 0,
+    ctl=0; return
+  end
+  k0=log(d0)/log(10);
+  kd=round(k0);
+  pp=10.^kd;
   dd=round(d0/pp);
-  if dd == 0, 
-    kd=floor(k0); 
-    pp=10.^kd; 
+  if dd == 0,
+    kd=floor(k0);
+    pp=10.^kd;
     dd=round(d0/pp);
   end
   dd=pp*dd;
