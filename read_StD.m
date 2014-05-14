@@ -15,7 +15,7 @@ function [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.3 2008/10/08 18:18:04 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.4 2008/10/09 01:09:48 jmc Exp $
 % $Name:  $
 
 %- Remove insignificant whitespace:
@@ -129,7 +129,7 @@ if frq > 0, dIt=1./max(1,dIt); else dIt=ones(1,nIt); end
 
 %- build time: 
 delT=0;
-if nIt > 1, delT=tim(2,1)-tim(1,1); delT=max(0,delT); end
+if nIt > 1, delT=(tim(nIt,1)-tim(1,1))/(nIt-1); delT=max(0,delT); end
 if delT > 0,
   delT=abs(frq)/delT;
   delta=delT-round(delT);
