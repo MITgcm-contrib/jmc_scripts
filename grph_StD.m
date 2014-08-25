@@ -1,11 +1,10 @@
  prefix='dynStD';
- namA={'r16b','r17a'}; 
-%namA={'r17a'}; 
+ namA={'g02','b02'};
+%namA={'r17a'};
  Nexp=size(namA,2);
 %-
-%namA(2)={'r16a'};
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.3 2008/11/08 18:26:09 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.4 2013/09/27 23:11:26 jmc Exp $
 % $Name:  $
 
 
@@ -57,7 +56,7 @@ if krd > 0,
    fprintf('save to "sav_StD.mat" file ...');
    save('sav_StD.mat','vvA','tiA','ntA','rList','listV');
    fprintf(' done\n')
- end 
+ end
 elseif krd < 0,
  fprintf('load from "sav_StD.mat" file ...');
  load sav_StD
@@ -85,10 +84,11 @@ end;
 list_on=zeros(1,nbV);
 nbG=8;
 nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
+%if nbG < nbV, list_on=0; list_on(nbG:nbV)=1; end %- to get 2nd set of plots
 %list_on(1:6)=[1 1 1 1 1 1];
 
 isA=ones(1,Nexp); ieA=ntA;
-%- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500) 
+%- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500)
 %isA=isA*31 ; % drop the 1rst mnth (1 Monitor/d)
 isA=isA*2 ; % drop the 1rst mnth (1 Monitor/30d)
 %isA(1)=31 ; isA(2)=4 ; % drop the 1rst mnth
@@ -102,26 +102,29 @@ linA(5,:)='m-';
 linA(6,:)='c-';
 
 ieA=min(ieA,nItMx);
-%titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ; 
+%titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ;
 titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
 %titall='Dyncore test-case 5 (cs-32)' ;
 
 %=========================================================
- 
-for ng=1:nbV,
+
+ng=0;
+for jv=1:nbV,
 %-------------------
- flag=list_on(ng); kl=0;
- vv1=vvA(:,:,:,:,ng,:); namV=char(listV(ng));
+ flag=list_on(jv); kl=0;
+ vv1=vvA(:,:,:,:,jv,:); namV=char(listV(jv));
  titv=strrep(namV,'_','\_');
 %if strcmp(namV,'Eta'), vv1=vv1/100; titv='Eta [mb]'; end
 %if strcmp(namV,'T'), kl=1; end		% <-- to get surf.Temp
-%if ng == 1, flag=2*list_on(1) ; end
  if kl > 0, titv=[titv,'\_',int2str(kl)];
    fprintf([' var= ',namV,' at level k= %i \n'],kl);
  end
 
  if flag == 1
 %--
+  ng=ng+1;
+%- reset "ng" to jv for fix fig number (independent of which one is in list_on):
+  %ng=jv;
   figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
   var=squeeze(vv1(1+kl,:,1,:,:)); dd=zeros(5,Nexp); av=zeros(5,Nexp);
   for n=1:Nexp,
@@ -151,10 +154,10 @@ for ng=1:nbV,
   set(T,'HorizontalAlignment','center','FontSize',12);
   Td=text(0.99,0.01,date);
   set(Td,'HorizontalAlignment','right','FontSize',6);
-%--- 
+%---
  end
 
-%------------------- 
+%-------------------
 end
 
 %=========================================================
