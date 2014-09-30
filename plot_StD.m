@@ -1,5 +1,7 @@
  prefix='dynStD';
- namA='r527';
+ prefix='oceStD';
+ pCoords=0;
+ namA='c06';
  Nexp=1; Nc=size(namA,2);
 %--
 
@@ -10,8 +12,6 @@ nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 %nItMx=60*ones(1,Nexp);
 namLg=namA ; namLg=strrep(namLg,'_','\_');
 %-----------
-%- ngEn = Nb of Energy plot: = 2 or = 4  ;
-ngEn=2;
 %- test if the variable krd is define :
 if size(who('krd'),1) > 0,
  fprintf('krd is defined and = %i \n',krd);
@@ -56,7 +56,7 @@ if krd > 0,
    fprintf('save to "sav_StD.mat" file ...');
    save('sav_StD.mat','vvA','tiA','ntA','rList','listV');
    fprintf(' done\n')
- end 
+ end
 elseif krd < 0,
  fprintf('load from "sav_StD.mat" file ...');
  load sav_StD
@@ -64,7 +64,7 @@ elseif krd < 0,
 end
 if krd ~= 0,
  ttA=squeeze(tiA(:,2,:));
- ttA=ttA/3600; titT='hrs';  ttA=ttA/24; titT='days';
+ ttA=ttA/3600; titT='hrs';  ttA=ttA/24 ; titT='days';
  ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
 end
 %=========================================================
@@ -82,15 +82,14 @@ end;
 %--
 
 list_on=zeros(1,nbV);
-nbG=8;
+nbG=9;
 nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
 %list_on(1:6)=[1 1 1 1 1 1];
+%list_on(5:7)=0;
 
 isA=ones(1,Nexp); ieA=ntA;
-%- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500) 
-%isA=isA*31 ; % drop the 1rst mnth (1 Monitor/d)
-%isA=isA*36 ; % drop the 1rst year (1 Monitor/10d)
-%isA(1)=31 ; isA(2)=4 ; % drop the 1rst mnth
+%- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500)
+%isA=isA*3 ; % drop the 1rst mnth (1 Monitor/10.d)
 %ieA(:)=360; isA(:)=1;
 
 linA(1,:)='k-'; % ieA(1)=60 ; % ieA(1)=1152 ;
@@ -101,21 +100,25 @@ linA(5,:)='m-';
 linA(6,:)='c-';
 
 ieA=min(ieA,nItMx);
-%titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ; 
-%titall='Global Ocean, Cubic-G (32x32) , NCEP Forc (2)' ;
 titall=['Exp: ',namLg(1,:)];
 
 %=========================================================
- 
+
+%-default: dxRed=0; dyRed=0; dxB=0.1; dyB=0.9;
+dxRed=0; dyRed=0.03; dxB=0.02; dyB=0.9;
+[xyP,xyB]=def_subP(-4,dxRed,dyRed,dxB,dyB);
+xyP(:,2)=xyP(:,2)+0.010;
+xyB(:,2)=xyB(:,2)+0.010;
+
 for ng=1:nbV,
 %-------------------
- flag=list_on(ng); kl=0;
+ yax=[1:nk-1]; if pCoords == 0, yax=-[1:nk-1]; end
+ flag=list_on(ng);
  vv1=vvA(:,:,:,:,ng,:); namV=char(listV(ng));
  titv=strrep(namV,'_','\_');
-%if strcmp(namV,'Eta'), vv1=vv1/100; titv='Eta [mb]'; end
-%if strcmp(namV,'T'), kl=1; end
- if strcmp(namV,'T'), 
-   namfil=['../res_',namA(2:end),'/RC']; D=dir([namfil,'.data']);
+ if strcmp(namV,'Eta') & pCoords == 1, vv1=vv1/100; titv='Eta [mb]'; end
+ if strcmp(namV,'T') & pCoords == 1,
+   namfil=['../res_',namA(1:end),'/RC']; D=dir([namfil,'.data']);
    if size(D,1) == 1,
      rC=rdmds(namfil);
      fprintf(' convert Pot.Temp to Temp.:');
@@ -129,21 +132,16 @@ for ng=1:nbV,
      fprintf(' no file: %s\n',namfil);
    end
  end
-%if ng == 1, flag=2*list_on(1) ; end
- if kl > 0, titv=[titv,'\_',int2str(kl)];
-   fprintf([' var= ',namV,' at level k= %i \n'],kl);
- end
 
  if flag == 1
 %--
   figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
-% if ng == 2, var=squeeze(vv1(2,:,1,:,:)); end % to get surf.Temp
   if kList(ng) == 1,
-   var=squeeze(vv1(1+kl,:,1,:,:));
+   var=squeeze(vv1(1,:,1,:,:));
    dd=squeeze(max(var)-min(var)); av=squeeze(mean(var));
    if Nexp == 1, av=av'; dd=dd'; end ;
    for nv=1:4,
-    subplot(410+nv); ttmn=' Mx-mn:'; ttav=' Av:';
+    axes('position',xyP(nv,:)); ttmn=' Mx-mn:'; ttav=' Av:';
     for n=1:Nexp,
       plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),nv,n),linA(n,:));
       if n == 1, hold on ; end ;
@@ -152,45 +150,47 @@ for ng=1:nbV,
     end ; hold off ;
     AA=axis ; dAA=AA(4)-AA(3);
     if AA(3)*AA(4) <= 0, AA(3)=min(AA(3),-dAA/10); AA(4)=max(AA(4),dAA/10); end
-    if ttax1 < ttax2, AA(1)=ttax1; AA(2)=ttax2; end; 
+    if ttax1 < ttax2, AA(1)=ttax1; AA(2)=ttax2; end;
     axis(AA); grid ;
-    if nv == 1, title(['Avr ',titv,'  ',ttmn]); end
+    if nv == 1, title(['Avr ',titv,'  ',ttmn]); xlabel(titT); end
     if nv == 2, title(['Std-Dev ',titv,'  ',ttav]); end
     if nv == 3, title(['min ',titv,'  ',ttav]); legend(namLg(1:Nexp,:),0); end
     if nv == 4, title(['Max ',titv,'  ',ttav]); end
    %if nv == 2, title(['Del-2 ',titv,'  ',ttav]); end
-   end ; xlabel(titT);
+   end ; %xlabel(titT);
   else
-   n=1;
+   n=1; k1=2;
+   if strcmp(namV,'CONVADJ') || strcmp(namV,'DRHODR'),
+     k1=3; yax=yax(2:nk-1);
+   end
    for nv=1:4,
-    subplot(410+nv);
-    var=squeeze(vv1(2:nk,:,1,nv,n))';
-    mnV=min(var(:)); MxV=max(var(:)); ccv=c_levs(mnV,MxV,-12);
-   %- pressure coordinate, from bottom (k=1) to top (k=nr=nk-1)
-   %[cs,h]=contour(ttA(isA(n):ieA(n),n),[1:nk-1],var(isA(n):ieA(n),:)',ccv);
-   %- z coordinate, from bottom (k=nr=nk-1) to top (k=1)
-    [cs,h]=contour(ttA(isA(n):ieA(n),n),-[1:nk-1],var(isA(n):ieA(n),:)',ccv);
-   %clabel(cs);isoline0(h);
-    colorbar;
-    if nv == 1, title(['Avr ',titv]); end
+    axes('position',xyP(nv,:));
+    var=squeeze(vv1(k1:nk,:,1,nv,n))'; mnV=min(var(:)); MxV=max(var(:));
+    ccv=c_levs(mnV,MxV,-12); %ccv=c_levs(mnV,MxV,-20);
+    if MxV > mnV,
+     [cs,h]=contour(ttA(isA(n):ieA(n),n),yax,var(isA(n):ieA(n),:)',ccv);
+    %clabel(cs);isoline0(h);
+     BB=colorbar; set(BB,'Position',xyB(nv,:));
+    end
+    if nv == 1, title(['Avr ',titv]); xlabel(titT); end
     if nv == 2, title(['Std-Dev ',titv]); end
     if nv == 3, title(['min ',titv]); ; end
     if nv == 4, title(['Max ',titv]); end
-    AA=axis; dAA=AA(4)-AA(3); 
+    AA=axis; dAA=AA(4)-AA(3);
     ttmn=sprintf('mn= %4.3g , Mx= %4.3g',mnV,MxV);
-    text(AA(1)*.4+AA(2)*.6,AA(3)-0.27*dAA,ttmn);
-   end ; xlabel(titT);
+    text(AA(1)*.4+AA(2)*.6,AA(3)-0.20*dAA,ttmn);
+   end ; %xlabel(titT);
   end
 %--
   axes('position',[.01,.01,.99,.99],'Visible','off');
-  T=text(0.5,0.97,titall);
+  T=text(0.2,0.98,titall);
   set(T,'HorizontalAlignment','center','FontSize',12);
-  Td=text(0.99,0.01,date);
-  set(Td,'HorizontalAlignment','right','FontSize',6);
-%--- 
+  Td=text(0.01,0.01,date);
+  set(Td,'HorizontalAlignment','left','FontSize',6);
+%---
  end
 
-%------------------- 
+%-------------------
 end
 
 %=========================================================
