@@ -4,13 +4,13 @@
  Nexp=size(namA,2);
 %-
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.4 2013/09/27 23:11:26 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.5 2014/08/25 21:35:12 jmc Exp $
 % $Name:  $
-
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 nItMx=2400*ones(1,Nexp);
 namLg=namA ; namLg=strrep(namLg,'_','\_');
+undef=123456.7;
 %-----------
 %- test if the variable krd is define :
 if size(who('krd'),1) > 0,
@@ -32,6 +32,7 @@ if krd > 0,
   [ntA(n),rList,tim,vv1,listV] = ...
     read_StD(prefix,namA(n),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
+  vv1(find(vv1==undef))=NaN;
 %- set global dims: & load vvA --> vvB
   nbV=size(listV,2);
   nrec=nIt; n3d=nk; nReg=nRg;
@@ -42,6 +43,7 @@ if krd > 0,
   [ntA(n),rList,tim,vv1,listV] = ...
     read_StD(prefix,namA(n),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
+  vv1(find(vv1==undef))=NaN;
   if (nrec < nIt),
     fprintf('\n');
     error([' Nb of records=',int2str(nIt),' exceeds nrec=',int2str(nrec)]);
