@@ -1,10 +1,11 @@
  prefix='dynStD';
+%prefix='iceStD';
  namA={'g02','b02'};
 %namA={'r17a'};
  Nexp=size(namA,2);
 %-
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.5 2014/08/25 21:35:12 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.6 2015/03/05 20:57:26 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -32,7 +33,6 @@ if krd > 0,
   [ntA(n),rList,tim,vv1,listV] = ...
     read_StD(prefix,namA(n),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
-  vv1(find(vv1==undef))=NaN;
 %- set global dims: & load vvA --> vvB
   nbV=size(listV,2);
   nrec=nIt; n3d=nk; nReg=nRg;
@@ -43,7 +43,6 @@ if krd > 0,
   [ntA(n),rList,tim,vv1,listV] = ...
     read_StD(prefix,namA(n),listV);
   nIt=ntA(n); nk=size(vv1,1); nRg=size(vv1,3);
-  vv1(find(vv1==undef))=NaN;
   if (nrec < nIt),
     fprintf('\n');
     error([' Nb of records=',int2str(nIt),' exceeds nrec=',int2str(nrec)]);
@@ -130,9 +129,12 @@ for jv=1:nbV,
   figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
   var=squeeze(vv1(1+kl,:,1,:,:)); dd=zeros(5,Nexp); av=zeros(5,Nexp);
   for n=1:Nexp,
-   dd(:,n)=max(var(isA(n):ieA(n),:,n))-min(var(isA(n):ieA(n),:,n));
-   av(:,n)=mean(var(isA(n):ieA(n),:,n));
+   tmp=var(isA(n):ieA(n),:,n); [I]=find(tmp(:,1)==undef); tmp(I,:)=0;
+   av(:,n)=sum(tmp);
+   if length(I) < size(tmp,1), av(:,n)=av(:,n)/(size(tmp,1)-length(I)); end
+   tmp(I,:)=NaN; dd(:,n)=max(tmp)-min(tmp);
   end
+  var(find(var==undef))=NaN;
   for nv=1:4,
     subplot(410+nv); ttmn=' Mx-mn:'; ttav=' Av:';
     for n=1:Nexp,
