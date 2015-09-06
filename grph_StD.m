@@ -5,11 +5,11 @@
  Nexp=size(namA,2);
 %-
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.6 2015/03/05 20:57:26 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.7 2015/03/07 14:45:49 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
-nItMx=2400*ones(1,Nexp);
+%nItMx=2400*ones(1,Nexp);
 namLg=namA ; namLg=strrep(namLg,'_','\_');
 undef=123456.7;
 %-----------
@@ -83,7 +83,7 @@ end;
 %--
 
 list_on=zeros(1,nbV);
-nbG=8;
+nbG=18;
 nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
 %if nbG < nbV, list_on=0; list_on(nbG:nbV)=1; end %- to get 2nd set of plots
 %list_on(1:6)=[1 1 1 1 1 1];
@@ -108,8 +108,9 @@ titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
 %titall='Dyncore test-case 5 (cs-32)' ;
 
 %=========================================================
+ng=0; fxb=100; fyb=60;
+%fyb=160; fxb=-2600;
 
-ng=0;
 for jv=1:nbV,
 %-------------------
  flag=list_on(jv); kl=0;
@@ -126,7 +127,7 @@ for jv=1:nbV,
   ng=ng+1;
 %- reset "ng" to jv for fix fig number (independent of which one is in list_on):
   %ng=jv;
-  figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
+  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng 500 700]);clf;
   var=squeeze(vv1(1+kl,:,1,:,:)); dd=zeros(5,Nexp); av=zeros(5,Nexp);
   for n=1:Nexp,
    tmp=var(isA(n):ieA(n),:,n); [I]=find(tmp(:,1)==undef); tmp(I,:)=0;

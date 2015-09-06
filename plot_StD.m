@@ -1,11 +1,14 @@
  prefix='dynStD';
- prefix='oceStD';
+%prefix='oceStD';
  pCoords=0;
  namA='c06';
  Nexp=1; Nc=size(namA,2);
+ nAvr=1;
+%- to plot annual mean instead of 10.d aver:
+%nAvr=36;
 %--
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/plot_StD.m,v 1.3 2014/09/30 22:10:26 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/plot_StD.m,v 1.4 2015/03/05 20:57:26 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -69,6 +72,14 @@ if krd ~= 0,
  ttA=squeeze(tiA(:,2,:));
  ttA=ttA/3600; titT='hrs';  ttA=ttA/24 ; titT='days';
  ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
+%- change to plot annual mean:
+ if nAvr > 1 & rem(nrec,nAvr)==0,
+  nrec=nrec/nAvr; ntA=ntA/nAvr;
+  vvA=reshape(   vvA,[n3d nAvr nrec nReg 5 nbV Nexp]);
+  vvA=reshape(mean(vvA,2),[n3d nrec nReg 5 nbV Nexp]);
+  ttA=reshape(   ttA,[nAvr nrec Nexp]);
+  ttA=reshape(mean(ttA,1),[nrec Nexp]);
+ end
 end
 %=========================================================
 
@@ -82,10 +93,10 @@ fprintf('Total length: ntA=');fprintf(' %i ,',ntA); fprintf(' \n');
 for n=1:Nexp,
 fprintf(' exp %i : time(d):%10.2f ->%10.2f \n', n,ttA(1,n),ttA(ntA(n),n) );
 end;
-%--
+%-
 
 list_on=zeros(1,nbV);
-nbG=9;
+nbG=10;
 nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
 %list_on(1:6)=[1 1 1 1 1 1];
 %list_on(5:7)=0;
@@ -113,6 +124,9 @@ dxRed=0; dyRed=0.03; dxB=0.02; dyB=0.9;
 xyP(:,2)=xyP(:,2)+0.010;
 xyB(:,2)=xyB(:,2)+0.010;
 
+fxb=100; fyb=60;
+%fxb=-2600; fyb=160; %fxb=100;
+
 for ng=1:nbV,
 %-------------------
  yax=[1:nk-1]; if pCoords == 0, yax=-[1:nk-1]; end
@@ -138,7 +152,8 @@ for ng=1:nbV,
 
  if flag == 1
 %--
-  figure(ng); set(ng,'position',[100+100*ng 60+40*ng 500 700]);clf;
+  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng 500 700]);clf;
+  colormap jet
   if kList(ng) == 1,
    var=squeeze(vv1(1,:,1,:,:));
    dd=squeeze(max(var)-min(var)); av=squeeze(mean(var));
