@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.11 2012/08/16 23:08:56 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.12 2013/12/03 00:03:58 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -589,7 +589,7 @@ if test $ksel = 7 ; then
  cd ..
 #- move back files from temp_tst dir:
  echo '=> restore std data files'
- rm -f rank_{0,$rnkO,$rnkA}/data
+ rm -f rank_{$rnkO,$rnkA}/data
  rm -f rank_{$rnkO,$rnkA}/data.tst
  rm -f rank_{$rnkO,$rnkA}/data.pkg
  mv $tmpDir.0/*Ocean.0001.clog $tmpDir.1/* rank_$rnkO
