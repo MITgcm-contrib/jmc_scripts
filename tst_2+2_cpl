@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.12 2013/12/03 00:03:58 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.13 2015/10/25 18:02:14 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -24,6 +24,23 @@ dif_tiles()
 #   for all tiles  ==> do diff dd1/file dd2/file'
     dd1=$1 ; dd2=$2 ; zz=$3
     chkmeta='N'
+    listY=`(cd $dd1 ; ls $zz.data | sed "s/\.data//") 2> /dev/null`
+    if test "x$listY" = "x$zz" ; then
+      echo '--> file='$zz' (global)'
+      echo diff $dd1/$zz.data $dd2
+      diff $dd1/$zz.data $dd2
+      out=$?
+      if test $out != 0
+      then echo 'Diff outp=' $out ' ==> stop'
+       exit ; fi
+      if test $chkmeta = 'Y' ; then
+       echo diff $dd1/$zz.meta $dd2
+       diff $dd1/$zz.meta $dd2
+       out=$?
+       if test $out != 0 ; then echo 'Diff outp=' $out ' ==> stop' ; exit ; fi
+      fi
+      return
+    fi
     listY=`(cd $dd1 ; ls $zz.*.data | sed "s/$zz\.//" | sed "s/\.data//")`
     echo '--> file='$zz', listY='$listY
     for yy in $listY
