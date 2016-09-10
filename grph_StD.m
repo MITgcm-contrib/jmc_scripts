@@ -5,7 +5,7 @@
  Nexp=size(namA,2);
 %-
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.7 2015/03/07 14:45:49 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.8 2015/09/06 18:15:09 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -108,8 +108,8 @@ titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
 %titall='Dyncore test-case 5 (cs-32)' ;
 
 %=========================================================
-ng=0; fxb=100; fyb=60;
-%fyb=160; fxb=-2600;
+ng=0; fxb=100; fyb=60; fdx=100; fdy=40; fsc=1.;
+%fyb=-360; fxb=-2600; fdy=60; fsc=1.5;
 
 for jv=1:nbV,
 %-------------------
@@ -127,7 +127,7 @@ for jv=1:nbV,
   ng=ng+1;
 %- reset "ng" to jv for fix fig number (independent of which one is in list_on):
   %ng=jv;
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng 500 700]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
   var=squeeze(vv1(1+kl,:,1,:,:)); dd=zeros(5,Nexp); av=zeros(5,Nexp);
   for n=1:Nexp,
    tmp=var(isA(n):ieA(n),:,n); [I]=find(tmp(:,1)==undef); tmp(I,:)=0;
