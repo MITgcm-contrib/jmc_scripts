@@ -1,28 +1,28 @@
 %- matlab script to write 1 global pickup file from a set of tiled pickup files
 %  to start, type: >> rdwrpick
 
-% $Header:  $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/rdwrpick.m,v 1.1 2008/04/06 21:39:30 jmc Exp $
 % $Name:  $
 
 namInp='pickup';
 
  fprintf(' suffix for pickup file: 0=std ; 1=nh ; 2=cd ; 3=seaice ; 4=ice ; 5=pTrs\n');
-%kr=input('   8=fizhi ; 9=vegtiles ; select one those: ? \n');
- kr=input('   6=land ; 7=cpl ; 8=fizhi ; 9,10=somT,S ; select one those: ? \n');
+ kr=input('   6=dic ; 7=land ; 7=cpl ; 9=fizhi ; 10,11=somT,S ; select one those: ?\n');
 switch kr
  case 1,  namInp=[namInp,'_nh'];
  case 2,  namInp=[namInp,'_cd'];
  case 3,  namInp=[namInp,'_seaice'];
  case 4,  namInp=[namInp,'_ic'];
  case 5,  namInp=[namInp,'_ptracers'];
- case 6,  namInp=[namInp,'_land'];
- case 7,  namInp=[namInp,'_cpl'];
- case 8,  namInp=[namInp,'_fizhi'];
+ case 6,  namInp=[namInp,'_dic'];
+ case 7,  namInp=[namInp,'_land'];
+ case 8,  namInp=[namInp,'_cpl'];
+ case 9,  namInp=[namInp,'_fizhi'];
 %case 9,  namInp=[namInp,'_vegtiles'];
- case 9,  namInp=[namInp,'_somT'];
- case 10, namInp=[namInp,'_somS'];
+ case 10, namInp=[namInp,'_somT'];
+ case 11, namInp=[namInp,'_somS'];
 end
- 
+
 nit=input([' put together all partial ',namInp,  ...
            ' files : input n_iter = ? (-1,-2:ckptA,B) \n']);
 
@@ -31,13 +31,13 @@ if nit < 0,
  else namfil=[namInp,'.ckptB'];
  end
 else
- namfil=fname(namInp,nit);
+ namfil=sprintf('%s.%10.10i',namInp,nit);
 end
 %-----------
-%u,gu,gum v,gv,gvm, t,gt,gtm, s,gs,gsm, eta 
+%u,gu,gum v,gv,gvm, t,gt,gtm, s,gs,gsm, eta
 
 fprintf(['read files: ',namfil,'* \n \n']);
-va=rdmds(namfil); 
+va=rdmds(namfil);
 %fprintf(' read full size : %i %i %i \n \n',size(va));
 fprintf(' read full size :'); fprintf(' %i',size(va)); fprintf('\n\n');
 
