@@ -150,7 +150,8 @@ for jv=1:nbV,
     axis(AA); grid ;
     if nv == 1, title(['Avr ',titv,'  ',ttmn]); end
     if nv == 2, title(['Std-Dev ',titv,'  ',ttav]); end
-    if nv == 3, title(['min ',titv,'  ',ttav]); legend(namLg,0); end
+    if nv == 3, title(['min ',titv,'  ',ttav]);
+	        legend(namLg,'Location','best'); end
     if nv == 4, title(['Max ',titv,'  ',ttav]); end
   end ; xlabel(titT);
 %--

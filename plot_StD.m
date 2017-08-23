@@ -8,7 +8,7 @@
 %nAvr=36;
 %--
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/plot_StD.m,v 1.4 2015/03/05 20:57:26 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/plot_StD.m,v 1.5 2015/09/06 18:15:09 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -124,8 +124,8 @@ dxRed=0; dyRed=0.03; dxB=0.02; dyB=0.9;
 xyP(:,2)=xyP(:,2)+0.010;
 xyB(:,2)=xyB(:,2)+0.010;
 
-fxb=100; fyb=60;
-%fxb=-2600; fyb=160; %fxb=100;
+fxb=100; fyb=60; fdx=100; fdy=40; fsc=1.;
+%fyb=-360; fxb=-2600; fdy=60; fsc=1.5;
 
 for ng=1:nbV,
 %-------------------
@@ -152,7 +152,7 @@ for ng=1:nbV,
 
  if flag == 1
 %--
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng 500 700]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
   colormap jet
   if kList(ng) == 1,
    var=squeeze(vv1(1,:,1,:,:));
@@ -172,7 +172,8 @@ for ng=1:nbV,
     axis(AA); grid ;
     if nv == 1, title(['Avr ',titv,'  ',ttmn]); xlabel(titT); end
     if nv == 2, title(['Std-Dev ',titv,'  ',ttav]); end
-    if nv == 3, title(['min ',titv,'  ',ttav]); legend(namLg(1:Nexp,:),0); end
+    if nv == 3, title(['min ',titv,'  ',ttav]);
+	        legend(namLg(1:Nexp,:),'Location','best'); end
     if nv == 4, title(['Max ',titv,'  ',ttav]); end
    %if nv == 2, title(['Del-2 ',titv,'  ',ttav]); end
    end ; %xlabel(titT);
