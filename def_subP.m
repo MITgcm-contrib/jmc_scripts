@@ -1,4 +1,6 @@
 function [xyP,xyB]=def_subP(n,dxRed,dyRed,dxB,dyB);
+% [xyP,xyB]=def_subP(n,dxRed,dyRed,dxB,dyB);
+%
 %     n = number of subplot in the page
 % dxRed = reduction of Horizon. size (x-dir) on the right side
 % dyRed = reduction of Vertical size (y-dir) splitted on both side
@@ -10,7 +12,7 @@ function [xyP,xyB]=def_subP(n,dxRed,dyRed,dxB,dyB);
 %  axes('position',xyP(j,:)); {make the plot}
 %  BB=colorbar; set(BB,'Position',xyB(j,:));
 
-% $Header:  $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/def_subP.m,v 1.1 2014/09/30 22:10:26 jmc Exp $
 % $Name:  $
 
 if nargin < 2, dxRed=0; end
@@ -86,7 +88,8 @@ if n == -4,
 %-- to replace subplot(41?): [xyP]=def_subP(-4); axes('position',xyP(?,:));
  xyP(:,1)=0.10 ; xyP(:,2)=0.16/4;
  xyP(:,3)=0.78 ; xyP(:,4)=0.72/4;
- xyP(2:4,2)=xyP(1,2)+[1:3]*(0.98/4);
+%xyP(2:4,2)=xyP(1,2)+[1:3]*(0.98/4); %- put the 1rst @ the bottom
+ xyP(1:3,2)=xyP(4,2)+[3:-1:1]*(0.98/4); %- put the 1rst @ the top
 %-- reduction size in X dir:
  xyP(:,3)=xyP(:,3)*(1-dxRed);
 %----------
