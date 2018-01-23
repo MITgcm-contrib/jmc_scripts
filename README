@@ -17,7 +17,7 @@ script: do_test_2+2
 - do_test_2+2 -help -> print "usage"
 
 NOTE: scripts "tst_2+2" & "do_test_2+2" have been moved (Dec 25, 2007)
- to: MITgcm/tools
+ to: MITgcm/tools/
 
 script: tst_2+2_cpl
  = version of tst_2+2 adapted for coupled set-up (verification/cpl_aim+ocn)
