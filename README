@@ -58,4 +58,4 @@ f) script: derive_other_types
   only be applied to the 4 src files: "mdsio_pass_r{4,8}tor{l,s}.F"
 
 g) script: mk_options_list
-  generate list of CPP Options used in Fortran source files 
+  generate list of CPP Options used in Fortran source files
