@@ -1,21 +1,21 @@
-function [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
-% [nIt,rList,tim,vvA,listV,kList]=read_StD(namF,sufx,listV);
+function [nIt,rList,tim,vvA,listV,listK]=read_StD(namF,sufx,listV);
+% [nIt,rList,tim,vvA,listV,listK]=read_StD(namF,sufx,listV);
 %
 % read ASCII stat-Diags output files (after splitted by script extract_StD)
 %
 % input: listV = list of fileds to read in ; if ='all_flds' => read all fields
 %        namF  = prefix of all file names to read (after extract_StD)
 %        sufx  = suffix of all file names to read (after extract_StD)
-% output: 
+% output:
 %  nIt      = number of time reccords
 %  rList    = list of region number
 %  tim(:,1) = iterations number ; tim(:,2) = time in simulation
 %  listV    = list of fields
-%  kList    = list of levels number
+%  listK    = list of level numbers
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.4 2008/10/09 01:09:48 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.5 2014/05/14 16:53:04 jmc Exp $
 % $Name:  $
 
 %- Remove insignificant whitespace:
@@ -26,19 +26,19 @@ namfil=[namF,'_Iter','.',sufx];
  fprintf(['read ',sufx,' :']);
 rf=-1; if strcmp(char(listV),'all_flds'), rf=0; end
 
-%- read from Header file: 
+%- read from Header file:
 %   frequency ; list of regions ; list of levels ; (+ list of Var, if rf=0)
 fid=fopen(namfhd,'r');
 D=dir(namfhd);
 if size(D,1) == 1,
  fprintf(' head');
 else error(['file: ',namfhd,' not found']); return; end
-flag=1; l=0; k=3; 
+flag=1; l=0; k=3;
 while flag > 0
  tline=fgetl(fid);
- if ischar(tline), l=l+1; 
+ if ischar(tline), l=l+1;
    %disp(tline);
-    if tline(2:12) == ' frequency ', 
+    if tline(2:12) == ' frequency ',
      frq=sscanf(tline(17:end),'%f');
      k=k-1;
     end
@@ -46,24 +46,24 @@ while flag > 0
      rList=sscanf(tline(17:end),'%i');
      k=k-1;
     end
-    if tline(2:15) == ' Nb of levels ', 
+    if tline(2:15) == ' Nb of levels ',
      kList=sscanf(tline(17:end),'%i');
      k=k-1;
     end
-    if rf >=0 & tline(2:10) == ' Fields  ', 
+    if rf >=0 & tline(2:10) == ' Fields  ',
       tmp=[tline(17:end),' ']; i1=0;
       for i=1:length(tmp),
-        if isspace(tmp(i)), 
+        if isspace(tmp(i)),
           if i1 > 0 & i > i1,
             if rf == 0, listV=cellstr(tmp(i1:i-1));
             else listV(rf+1)=cellstr(tmp(i1:i-1)); end
             i1=i+1; rf=rf+1;
-          else i1=i+1; 
+          else i1=i+1;
           end
         end
       end
     end
-    if tline(2:15) == ' end of header', 
+    if tline(2:15) == ' end of header',
      flag=0;
     end
  else flag=-1; end
@@ -88,7 +88,7 @@ if rf > 0,
      case 'THETASQ' ,  var2='T2';
      otherwise     var2=var1;
      end
-     listV(j)=cellstr(var2); 
+     listV(j)=cellstr(var2);
      if strcmp(var1,var2), fprintf(' %s\n',var2);
           else fprintf(' %s --> %s\n',var1,var2); end
    end
@@ -118,8 +118,8 @@ nIt=size(var,1);
 %- initialize output & save Iter:
 tim=zeros(nIt,2); vvA=zeros(n3d,nIt,nReg,5,nbV);
 msgA=' '; msgB=' ';
-tim(:,1)=var; 
- 
+tim(:,1)=var;
+
 dIt=ones(1,nIt);
 if nIt > 1, dIt(2:nIt)=tim(2:nIt,1)-tim(1:nIt-1,1); dIt(1)=dIt(2); end
 % fprintf(' (dIt: %i %i)',min(dIt(1:nIt)),max(dIt(1:nIt)));
@@ -127,7 +127,7 @@ if nIt > 1, dIt(2:nIt)=tim(2:nIt,1)-tim(1:nIt-1,1); dIt(1)=dIt(2); end
 %            (frq<0 : no volume correction if snap-shot)
 if frq > 0, dIt=1./max(1,dIt); else dIt=ones(1,nIt); end
 
-%- build time: 
+%- build time:
 delT=0;
 if nIt > 1, delT=(tim(nIt,1)-tim(1,1))/(nIt-1); delT=max(0,delT); end
 if delT > 0,
@@ -158,11 +158,14 @@ for nv=1:nbV,
            ' reading field: ',namV]);
   end
   if nk > 0, vvA(1:nk,:,:,:,nv)=vv1; end
+  if nv == 1, listK=nk; else listK=[listK nk]; end
 end
 fprintf(' <= end \n');
 if length(msgA) ~= 1, fprintf(['  not found:',msgA,'\n']) ; end
 if length(msgB) ~= 1, fprintf(['  dim Pb:',msgB,'\n']) ; end
-if n3d == 0, n3d=1; vvA=zeros(n3d,nIt,nReg,5,nbV); end
+if n3d == 0, n3d=1; vvA=zeros(n3d,nIt,nReg,5,nbV); else
+  s3d=max(listK); if n3d > s3d, vvA=vvA(1:s3d,:,:,:,:); end
+end
 
 return
 
@@ -179,7 +182,7 @@ function [vvm,nk,msg] = read_StD_1v(namF,nmV,sufx,nReg,nit,dit)
      vv1=reshape(vv1,[nk nReg nit 5]);
      vvm=permute(vv1,[1 3 2 4]);
    else
-    %fprintf(['\n ERROR in Dim, var=',nmV,' :']); fprintf(' %i',size(var)); 
+    %fprintf(['\n ERROR in Dim, var=',nmV,' :']); fprintf(' %i',size(var));
     %fprintf(' ; nk,nReg,nit= %i %i %i\n',nk,nReg,nit);
      msg=sprintf([' in ',nmV,' : %i <> %ix%ix%i'],size(var,1),nk,nReg,nit); nk=0;
      vvm=zeros(1,nit,nReg,5);
