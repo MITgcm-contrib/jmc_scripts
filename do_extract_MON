@@ -1,0 +1,34 @@
+#! /usr/bin/env bash
+
+# $Header: $
+# $Name: $
+
+filnam='std_outp'
+if test $# = 0
+then
+  echo 'Usage: '`basename $0`' [dir] [pfix] exp'
+  echo "  make 1 output file: outp.{exp}"
+  echo "  from all {pfix}* files in directory {dir}"
+  echo "   (default dir = res_{exp} , default prefix ='std_outp')"
+  echo '  running "extract_MON" for each of them.'
+  exit
+fi
+
+case $# in
+1) dir='res_'$1 ; exp=$1 ;;
+2) dir=$1       ; exp=$2 ;;
+3) dir=$1 ; filnam=$2 ; exp=$3 ;;
+*) echo 'Too many arguments !' exit ;;
+esac
+
+echo 'process with "extract_MON" '"all ${filnam}* from $dir into 1 file: outp.$exp"
+
+listF=`( cd $dir ; ls ${filnam}* )`
+nn=1
+for xx in $listF
+do
+ echo ~/bin/extract_MON $dir/$xx outp.$exp $nn
+ ~/bin/extract_MON $dir/$xx outp.$exp $nn
+ nn=2
+done
+exit

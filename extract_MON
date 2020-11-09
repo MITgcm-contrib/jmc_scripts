@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+
+# $Header: $
+# $Name: $
+
+tmpfil=TTT.$$
+if [ $# -le 1 ]
+then
+  echo 'Usage: '`basename $0`' file_input file_output [n]'
+  echo '  ==> extract lines with "MON" out off file_input to file_output'
+  echo '      start at the 1rst [or n^th] "%MON time_tsnumber"'
+  echo '   or (n<0) after the (-n)^th line that match the last record'
+  exit
+else
+ if test $# = 2 ; then n1=1 ; else n1=$3 ; fi
+ file=$1 ; output=$2 ;
+ echo '  ==> extract lines with "MON" out off file='$file ' to '$output
+fi
+#----------------------------------------------------------
+touch $output $tmpfil
+sed -n '/%MON/p' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
+#egrep '%MON|cg2d_init_res' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
+
+if test $n1 = 0
+then
+ echo '      take all lines'
+ cat $tmpfil >> $output
+ rm -f $tmpfil
+ exit
+fi
+
+if [ $n1 -lt 0 ]
+then
+#- used to add the 1rst "Shap global diagnostic" (if test $n1 = -1):
+#  select lines starting just after the -$n1 ^th line that match the last record
+ n0=`expr 0 - $n1`
+ line=`tail -1 $tmpfil | sed 's/= .....................//g'`
+ num0=`sed -n "/$line/=" $tmpfil | sed -n "$n0 p"`
+ num1=`expr $num0 + 1`
+else
+#  select lines starting at the $n1 ^th "time_tsnumber" record
+ num1=`sed -n '/%MON time_tsnumber/=' $tmpfil | sed -n "$n1 p"`
+fi
+echo '      start at line' $num1 ' :'
+sed -n "$num1 p" $tmpfil
+
+sed -n "$num1,$ p" $tmpfil >> $output
+rm -f $tmpfil
+exit

@@ -60,3 +60,22 @@ f) script: derive_other_types
 g) script: mk_options_list
   generate list of CPP Options used in Fortran source files
 
+----------------------------------------------------------------------
+shell & matlab scripts to process MONITOR output from STDOUT files
+ and make simple time-serie plots:
+--------------------
+a) shell script: select_MON
+ get all MONITOR output from a single file and split into many
+ single-variable output files (easier to load and plot)
+
+b) shell scripts: do_extract_MON & extract_MON
+ collect into a single file all MONITOR output from consecutive
+ STDOUT output files (from a single experiment with one of more restart)
+
+c) matlab script: grph_MON.m
+ plot MONITOR time-serie of one or more experiment (with lines of different
+ color). Note: experiment with larger number of records needs to come first.
+Uses: read_MON.m
+ to load-in single-variable output files (--> many files per experiment)
+and/or: readnc_MON.m
+ to load-in netcdf (MNC) MONITOR output files

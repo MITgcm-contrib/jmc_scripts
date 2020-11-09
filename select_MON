@@ -1,0 +1,421 @@
+#! /usr/bin/env bash
+
+# $Header: $
+# $Name: $
+
+#listp0='tim cfu cfv cfw cfW keX keA keV peA scT scS scH scE shT shS'
+listp0='tim cfu cfv cfw cfW keX keA peA scT scS'
+listp0="$listp0 amE amU amT"
+#listp1='et u_ v_ w_ t_ s_ z_'
+listp1='et u_ v_ w_ t_ s_'
+listp2='tsice siu_ siv_ sia_ sih_ snw_'
+listp3='tIm icE icA icH snH iTS iT1 iT2'
+listp4='Tim ldE lSn ldW lTS lT1 lT2'
+listp5='tiTr t1_ t2_ ... t#_ '
+#----------------------------------------------------------
+# to reduce the size of the output file, keeping the MONITOR output :
+# egrep '%MON' std_outp.100y | sed 's/(PID.TID 0000.0001) //g' > outp.100y
+#----------------------------------------------------------
+if [ $# -le 1 ]
+then
+  echo 'Usage:'`basename $0`'  file_input  rac_output  [List_selected_var]'
+  echo '  with  selected_var  in: '$listp0
+  echo '  or (min,Max,Av,StD) in: '$listp1
+  echo '  or (min,Max,Av,StD) in: '$listp2 ' <= take all if arg3=sIce'
+  echo '  or (mn,Mx,Av)*(N,S) in: '$listp3 ' <= take all if arg3=thSI'
+  echo '  or mn,Mx,Av*(N,T,S) in: '$listp4 ' <= take all if arg3=land'
+  echo '  or (min,Max,Av,StD) in: '$listp5 ' <= take all if arg3=pTr'
+  exit
+else
+ file=$1 ; rac=$2 ; shift ; shift ; nbvar=$#
+ echo 'take MONITOR results out off file='$file
+ SIce=0 ; ThSI=0 ; Land=0 ; pTr=0 ;
+ if test $# != 0 ; then
+  if   test $# = 1 -a $1 = 'sIce' ; then shift ; SIce=2 ;
+  elif test $# = 1 -a $1 = 'thSI' ; then shift ; ThSI=2 ;
+  elif test $# = 1 -a $1 = 'land' ; then shift ; Land=2 ;
+  elif test $# = 1 -a $1 = 'pTr'  ; then shift ; pTr=2  ;
+  else SIce=1 ; ThSI=1 ; Land=1 ; pTr=1 ; fi
+ fi
+ nbvar=$#
+ if test $pTr != 0 ; then
+   listPtr=`grep 'trcstat_ptracer0._sd' $file | \
+            sed 's/^(PID.TID 0000.0001) %MON trcstat_ptracer0/t/g' | \
+            sed 's/_sd         =.*$/_/g' | sort | uniq 2> /dev/null`
+#  echo "listPtr='$listPtr'"
+   if test "x$listPtr" = x
+   then echo 'no ptracer'
+   else listp5="tiTr $listPtr"
+#       echo 'listp5='$listp5
+   fi
+ fi
+fi
+#echo "nbvar= $nbvar ; SIce= $SIce ; ThSI= $ThSI ; Land= $Land ; pTr= $pTr"
+kk1=`expr $SIce '<=' 1`
+kk2=`expr $ThSI '<=' 1`
+kk3=`expr $Land '<=' 1`
+kk4=`expr $pTr  '<=' 1`
+if test $kk1 = 1 -a $kk2 = 1 -a $kk3 = 1 -a $kk4 = 1 ; then
+#----------------------------------------------------------
+ echo '==> output in :'
+for ppy in $listp0
+do
+ case $ppy in
+ 'tim') var='time_secondsf' ;;
+ 'cfu') var='advcfl_u';;
+ 'cfv') var='advcfl_v';;
+ 'cfw') var='advcfl_w';;
+ 'cfW') var='advcfl_W';;
+ 'keX') var='ke_max ' ;;
+ 'keA') var='ke_mean' ;;
+#'keA') var='ke_volmean' ;;
+ 'keV') var='ke_vol ' ;;
+ 'peA') var='pe_b_mean' ;;
+ 'amE') var='am_eta_mean' ;;
+ 'amU') var='am_uZo_mean' ;;
+ 'amT') var='am_tot_mean' ;;
+#'scT') var='surf_Corr_theta_mean ' ;;
+#'scS') var='surf_Corr_salt_mean ' ;;
+ 'scT') var='surfExpan_theta_mean ' ;;
+ 'scS') var='surfExpan_salt_mean ' ;;
+ 'scH') var='surfExpan_Heat_mean ' ;;
+ 'scE') var='En_Budget_T2PE_mean ' ;;
+ 'shT') var='ShapFilt Temp \(k=  0\)' ;;
+ 'shS') var='ShapFilt Salt \(k=  0\)' ;;
+ esac
+#-
+ pp=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+ else
+  pp=$ppy
+ fi
+#---
+ if test $pp != 0
+ then ppx=$pp ;
+   echo ' '$rac.$ppx '<== Select string= "'$var'"'
+  #if test $ppy = 'scT' -o $ppy = 'scS' -o $ppy = 'scH' -o $ppy = 'scE'
+  #then echo '0.' > $rac.$ppx ;
+  #  egrep "MON $var" $file | sed "s/.* *=//g" >> $rac.$ppx
+  #else
+     egrep "MON $var" $file | sed "s/.* *=//g"  > $rac.$ppx
+     if test ! -s $rac.$ppx ; then rm -f $rac.$ppx ; fi
+  #fi
+ fi
+done
+#----------------------------------------------------------
+ echo '==> output in :'
+#---
+for ppy in $listp1
+do
+ case $ppy in
+ 'et') vv='eta' ;;
+ 'u_') vv='uvel' ;;
+ 'v_') vv='vvel' ;;
+ 'w_') vv='wvel' ;;
+ 't_') vv='theta' ;;
+ 's_') vv='salt' ;;
+ 'z_') vv='vort' ;;
+ esac
+#-
+ pp=0 ; flag=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+  if test $pp = 0
+  then
+   for xx in N X A S D
+   do
+    ppx=$ppy$xx ;
+    for yy in $*
+    do
+     if test $yy = $ppx ; then pp=$ppx ; flag=1 ; fi
+    done
+   done
+  fi
+ else
+  pp=$ppy
+ fi
+#-
+ if test $pp != 0
+ then
+  for xx in N X A S D
+  do
+   ppx=$ppy$xx ;
+   if test $flag = 0 -o $pp = $ppx
+   then
+    if test $ppy = 'z_'
+    then
+     case $xx in
+     'N') var=${vv}_r_min  ;;
+     'X') var=${vv}_r_max  ;;
+     'A') var=${vv}_a_mean ;;
+     'S') var=${vv}_a_sd   ;;
+     'V') var=${vv}_p_mean ;;
+     'D') var=${vv}_p_sd   ;;
+     esac
+    else
+     case $xx in
+     'N') var=${vv}_min  ;;
+     'X') var=${vv}_max  ;;
+     'A') var=${vv}_mean ;;
+     'S') var=${vv}_sd   ;;
+     'D') var=${vv}_del2 ;;
+     'V') var=${vv}_vol  ;;
+     esac
+     var=dynstat_$var
+    fi
+    echo ' '$rac.$ppx '<== Select string= "'$var'"'
+    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+   fi
+  done
+ fi
+#---
+done
+#----------------------------------------------------------
+fi
+if [ $SIce -ge 1 ]
+then
+#----------------------------------------------------------
+ echo '==> output in :'
+#---
+for ppy in $listp2
+do
+ pp=0 ; flag=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+  if test $pp = 0
+  then
+   for xx in N X A S D
+   do
+    ppx=$ppy$xx ;
+    for yy in $*
+    do
+     if test $yy = $ppx ; then pp=$ppx ; flag=1 ; fi
+    done
+   done
+  fi
+ else
+  pp=$ppy
+ fi
+#-
+listp2='tsi siu siv sia sih snw'
+listp2='tsice siu_ siv_ sia_ sih_ snw_'
+ if test $pp = 'tsice' ; then
+  var='seaice_time_sec' ;
+  nn=`grep -c "MON $var" $file`
+  echo ' '$rac.$pp '<== Select string= "'$var'"'
+  egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
+ elif test $pp != 0 ; then
+  case $ppy in
+   'siu_') vv='uice' ;;
+   'siv_') vv='vice' ;;
+   'sia_') vv='area' ;;
+   'sih_') vv='heff' ;;
+   'snw_') vv='hsnow' ;;
+  esac
+# echo " vv='$vv'"
+  for xx in N X A S D
+  do
+   ppx=$ppy$xx ;
+   if test $flag = 0 -o $pp = $ppx
+   then
+    case $xx in
+    'N') var=${vv}_min  ;;
+    'X') var=${vv}_max  ;;
+    'A') var=${vv}_mean ;;
+    'S') var=${vv}_sd   ;;
+    'D') var=${vv}_del2 ;;
+    esac
+    var=seaice_$var
+    echo ' '$rac.$ppx '<== Select string= "'$var'"'
+    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+   fi
+  done
+ fi
+#---
+done
+#----------------------------------------------------------
+fi
+if [ $ThSI -ge 1 ]
+then
+#----------------------------------------------------------
+ echo '==> output in :'
+#---
+for ppy in $listp3
+do
+ case $ppy in
+ 'tIm') vv='time' ; listZ='Ic' ;;
+ 'icE') vv='TotEnerg' ; listZ='n' ;;
+ 'icA') vv='Ice_Area' ; listZ='_' ;;
+#'icV') vv='IceVolum' ; listZ='_' ;;
+ 'icH') vv='IceH_' ; listZ='x a' ;;
+ 'snH') vv='SnwH_' ; listZ='x a' ;;
+ 'iTS') vv='Tsrf_' ; listZ='m x a' ;;
+ 'iT1') vv='Tic1_' ; listZ='m x a' ;;
+ 'iT2') vv='Tic2_' ; listZ='m x a' ;;
+ esac
+#-
+ pp=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+ else
+  pp=$ppy
+ fi
+#-
+ if test $pp != 0
+ then
+   for zz in $listZ
+   do
+    case $zz in
+    'Ic') vvr=${vv} ; listX='sec' ;;
+    'n') vvr=${vv} ; listX='G' ;;
+    '_') vvr=${vv} ; listX='S N' ;;
+    'm') vvr=${vv}min ; listX='S N' ;;
+    'x') vvr=${vv}max ; listX='S N' ;;
+    'a') vvr=${vv}ave ; listX='S N G' ;;
+    esac
+    for xx in $listX
+    do
+     var=${vvr}'_'$xx
+     if test $zz = 'Ic' ; then ppx='i_tim' ; else ppx=$pp$zz$xx ; fi
+     var=thSI_$var
+     echo ' '$rac.$ppx '<== Select string= "'$var'"'
+     egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+    done
+   done
+ fi
+#---
+done
+#----------------------------------------------------------
+fi
+if [ $Land -ge 1 ] ; then
+#----------------------------------------------------------
+ echo '==> output in :'
+#---
+for ppy in $listp4
+do
+ case $ppy in
+ 'Tim') vv='time' ; listZ='l_' ;;
+ 'ldE') vv='TotEnerg';listZ='a' ;;
+ 'lSn') vv='SnwH_' ; listZ='x a' ;;
+ 'ldW') vv='grdW_' ; listZ='m a' ;;
+ 'lTS') vv='Tsrf_' ; listZ='m x a' ;;
+ 'lT1') vv='Tgr1_' ; listZ='m x a' ;;
+ 'lT2') vv='Tgr2_' ; listZ='m x a' ;;
+ esac
+#-
+ pp=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+ else
+  pp=$ppy
+ fi
+#-
+ if test $pp != 0
+ then
+   for zz in $listZ
+   do
+    case $zz in
+    'l_') vvr=${vv} ; listX='sec' ;;
+    'n') vvr=${vv} ; listX='G' ;;
+    '_') vvr=${vv} ; listX='S N' ;;
+    'm') vvr=${vv}min ; listX='S T N' ;;
+    'x') vvr=${vv}max ; listX='S T N' ;;
+    'a') vvr=${vv}ave ; listX='S T N G' ; if test $pp = 'ldE'; then vvr=$vv ; fi ;;
+    esac
+    for xx in $listX
+    do
+     var=${vvr}'_'$xx
+     if test $zz = 'l_' ; then ppx='l_tim' ; else ppx=$pp$zz$xx ; fi
+     var=land_$var
+     echo ' '$rac.$ppx '<== Select string= "'$var'"'
+     egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+    done
+   done
+ fi
+#---
+done
+#----------------------------------------------------------
+fi
+#exit
+if [ $pTr -ge 1 ] ; then
+#----------------------------------------------------------
+ echo '==> output in :'
+#---
+for ppy in $listp5
+do
+ pp=0 ; flag=0
+ if test $nbvar != 0
+ then
+  for yy in $*
+  do
+   if test $yy = $ppy ; then pp=$ppy ; fi
+  done
+  if test $pp = 0
+  then
+   for xx in N X A S D
+   do
+    ppx=$ppy$xx ;
+    for yy in $*
+    do
+     if test $yy = $ppx ; then pp=$ppx ; flag=1 ; fi
+    done
+   done
+  fi
+ else
+  pp=$ppy
+ fi
+#-
+ if test $pp = 'tiTr' ; then
+  var='trctime_secondsf' ;
+  nn=`grep -c "MON $var" $file`
+  if test $nn = 0 ; then var='time_secondsf' ; fi
+  echo ' '$rac.$pp '<== Select string= "'$var'"'
+  egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
+ elif test $pp != 0 ; then
+  vv=`echo $ppy | sed 's/^t/ptracer0/'`
+# echo " vv='$vv'"
+  for xx in N X A S D
+  do
+   ppx=$ppy$xx ;
+   if test $flag = 0 -o $pp = $ppx
+   then
+    case $xx in
+    'N') var=${vv}min  ;;
+    'X') var=${vv}max  ;;
+    'A') var=${vv}mean ;;
+    'S') var=${vv}sd   ;;
+    'D') var=${vv}del2 ;;
+    'V') var=${vv}vol  ;;
+    esac
+    var=trcstat_$var
+    echo ' '$rac.$ppx '<== Select string= "'$var'"'
+    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+   fi
+  done
+ fi
+#---
+done
+#----------------------------------------------------------
+fi
+exit
