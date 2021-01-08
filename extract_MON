@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
-# $Header: $
-# $Name: $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/extract_MON,v 1.1 2020/11/09 17:36:04 jmc Exp $
+# $Name:  $
 
 tmpfil=TTT.$$
 if [ $# -le 1 ]
@@ -16,6 +16,7 @@ else
  file=$1 ; output=$2 ;
  echo '  ==> extract lines with "MON" out off file='$file ' to '$output
 fi
+
 #----------------------------------------------------------
 touch $output $tmpfil
 sed -n '/%MON/p' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
