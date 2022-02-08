@@ -10,8 +10,8 @@
 %-- set type of monitor output files: ncF=0 : ASCII output file ; ncF=1 : NetCDF file
 ncF=zeros(1,Nexp);
 
-% $Header: $
-% $Name: $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.1 2020/11/09 17:36:04 jmc Exp $
+% $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 namLg=namA ; namLg=strrep(namLg,'_','\_');
@@ -227,6 +227,13 @@ for ng=1:size(list_on,2)
   for nv=1:ngEx-ngEk,
     vvM=mean(vvA(max(2,isA(n)):ieA(n),nv,:),1);
     subplot(100*ngEx+10+nv+2); ttmn=' Mx-mn:'; ttav=' Av:';
+    if nv == 1, titv2=' \theta'; else titv2=' S '; end
+    if list_log(ng) > 0,
+      var=zeros(nrec,Nexp); for n=1:Nexp, var(isA(n):ieA(n),n)=vvA(isA(n):ieA(n),nv,n); end
+      if min(var(:))*max(var(:)) >= 0, msk=var; ttyax='log';
+        var(find(msk==0))=1; var=log10(abs(var)); var(find(msk==0))=NaN;
+      end
+    else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
       plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
@@ -235,11 +242,11 @@ for ng=1:size(list_on,2)
     end ; hold off ;
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     grid ;
-    if nv == 1, title(['mean ',titv,' \theta']); end
-    if nv == 2, title(['mean ',titv,' S ']); end
+   %title(['mean ',titv1,titv2]);
+    title(['mean ',titv1,titv2,' ; ',ttav]);
 %--
-    titX='   '; for n=1:Nexp, titX=[titX,sprintf(' %4.3e',vvM(n))]; end
-    AA=axis; TM=text(AA(2),AA(3)+0.1*(AA(4)-AA(3)),titX);
+    titX='   '; for n=1:Nexp, titX=[titX,sprintf(' %4.3e,',vvM(n))]; end
+    AA=axis; TM=text(AA(2),AA(3)+0.1*(AA(4)-AA(3)),titX(1:end-1));
     set(TM,'HorizontalAlignment','right');
 %--
   end ;
