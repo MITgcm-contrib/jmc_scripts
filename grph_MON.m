@@ -10,7 +10,7 @@
 %-- set type of monitor output files: ncF=0 : ASCII output file ; ncF=1 : NetCDF file
 ncF=zeros(1,Nexp);
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.1 2020/11/09 17:36:04 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.2 2022/02/08 17:06:00 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -221,7 +221,7 @@ for ng=1:size(list_on,2)
    if length(ttyax) > 0, ylabel(ttyax); end
   end ;
  if ngEn < 4 & list_on(10) == 1,
-  titv='surf-Cor : ' ; vvA=scA ;
+  titv1='surf-Cor : ' ; vvA=scA ;
   dd=squeeze(max(vvA)-min(vvA)); av=squeeze(mean(vvA));
    if Nexp == 1, av=av'; dd=dd'; end ;
   for nv=1:ngEx-ngEk,
