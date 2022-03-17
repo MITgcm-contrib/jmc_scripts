@@ -20,7 +20,7 @@ NOTE: scripts "tst_2+2" & "do_test_2+2" have been moved (Dec 25, 2007)
  to: MITgcm/tools/
 
 script: tst_2+2_cpl
- = version of tst_2+2 adapted for coupled set-up (verification/cpl_aim+ocn)
+ = version of tst_2+2 adapted for coupled set-up (e.g., verification/cpl_aim+ocn)
 
 b) PBS-batch script that re-submit itself (loop).
 script: runScript
@@ -59,6 +59,10 @@ f) script: derive_other_types
 
 g) script: mk_options_list
   generate list of CPP Options used in Fortran source files
+
+h) script: comp_res
+  to compare MONITOR output from 2 STDOUT files (outside of testreport).
+  Note: use executable "cmpnum" compiled from tiny fortran code: cmpnum.f
 
 ----------------------------------------------------------------------
 shell & matlab scripts to process MONITOR output from STDOUT files

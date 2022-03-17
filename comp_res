@@ -1,0 +1,328 @@
+#! /usr/bin/env bash
+
+# $Header: $
+# $Name:  $
+#set -x
+
+comp_1fld()
+{
+   # comp_1fld select_string select_var print_var file_1 file_2
+   echo ' ' >> $logfil
+   uu="$1$2"
+   egrep "${uu}" $4 | sed 's/.*=//' | nl > tmp1.txt
+   egrep "${uu}" $5 | sed 's/.*=//' | nl > tmp2.txt
+   if test -s tmp1.txt ; then nl1=`sed -n '$=' tmp1.txt` ; else nl1=0 ; fi
+   if test -s tmp2.txt ; then nl2=`sed -n '$=' tmp2.txt` ; else nl2=0 ; fi
+   if [ $nl1 -ne $nl2 ] ; then
+     cmp=0
+     echo $cmp $3 ' ; nb output:' $nl1 $nl2
+     echo $cmp $3 ' ; nb output:' $nl1 $nl2 >> $logfil
+     rm -f tmp1.txt tmp2.txt
+   elif [ $nl1 -le 1 ] ; then
+     cmp=16
+     echo '--' $3 ' ; not enough output:' $nl1 $nl2
+     echo '--' $3 ' ; not enough output:' $nl1 $nl2 >> $logfil
+     rm -f tmp1.txt tmp2.txt
+   else
+     join tmp1.txt tmp2.txt > tmp3.txt
+     cmp=`$compex < tmp3.txt 2> tmp4.txt`
+     err=`egrep -c ' error ' tmp4.txt`
+     if [ $err -ge 1 ] ; then
+       echo $cmp $3 ':' $compex 'gives' $err 'error(s)'
+       echo $cmp $3 ':' $compex 'gives' $err 'error(s)' >> $logfil
+       cmp=0
+     elif test -s tmp4.txt ; then
+       cat tmp4.txt
+       echo $cmp $3 ' <- set to 0'
+       echo $cmp $3 ' <- set to 0' >> $logfil
+       cmp=0
+     else
+       printf '%2i %s\n' $cmp $3
+       printf '%2i %s\n' $cmp $3 >> $logfil
+     fi
+     if test -f cmpnum.log
+     then cat cmpnum.log >> $logfil ; rm -f cmpnum.log ; fi
+     rm -f tmp1.txt tmp2.txt tmp3.txt tmp4.txt
+   fi
+   if [ $cmp -lt $gMin ] ; then gMin=$cmp ; fi
+}
+
+kAd=0
+if [ $# -ge 3 ]  ; then
+ if test $3 = 'AD' ; then
+  kAd=1 ; fil1=$1 ; fil2=$2 ; shift
+ fi
+fi
+case $# in
+  2|3) ;;
+    *) echo "Usage: `basename $0` outp_file_1 outp_file_2 [AD][D,nh,ad,tl,S,I,L,#]"
+       echo " compare output from DEBUG_STATS (=D) or from [AD] MONITOR, with:"
+       echo "   nh (+cg3d) ; ad= Adj.Grad ; tl= Tang.Lin ; S= SeaIce only ;"
+       echo "   E= exf ; I= ThSI ; L= land ; M= StreamIce ; # = number of pTrac"
+       exit ;;
+esac
+if test $kAd = 0 ; then fil1=$1 ; fil2=$2 ; fi
+flag=0
+if test $# = 3 ; then flag=$3 ; fi
+logfil=comp_res.log
+
+echo 'flag=' $flag ' ; file_1 file_2 =' $fil1 $fil2
+
+#platform=`uname -i`
+platform=`uname -m`
+exDir=`echo $HOME/mitgcm/bin`
+compex=`ls $exDir/cmpnum.$platform 2>/dev/null`
+if test x$compex = x
+then compex=`ls $exDir/cmpnum 2>/dev/null` ; fi
+if test x$compex = x
+then echo "executable: $exDir/cmpnum not found" ; exit ; fi
+#echo $compex
+if test -x $compex
+then echo ' use executable:' $compex
+else echo "executable: $compex not found" ; exit
+fi
+
+  echo 'flag=' $flag ' ; file_1 file_2 =' $fil1 $fil2 > $logfil
+  echo ' use executable:' $compex >> $logfil
+
+listA='eta uvel vvel wvel theta salt'
+listB='u v w W'
+listC='pe_b ke_max ke_mean vort_r_min vort_r_max vort_a_sd vort_p_sd cg2d'
+if test $flag = 'nh'; then listC=$listC' cg3d' ; flag=0; fi
+
+listS='_min _max _mean _sd _del2'
+
+listDy='EtaN Uvel Vvel Wvel Theta Salt Gu Gv Gt Gs GuNm1 GvNm1 GtNm1 GsNm1 cg2d_b cg2d_x'
+#listDy='Gu Gv cg2d_b'
+listDb=' min max mean S.D.'
+
+listE='ustress vstress hflux sflux uwind vwind wspeed atemp aqh precip swflux lwflux swdown lwdown'
+if test $kAd = 0 ; then listE="$listE evap" ; fi
+
+listSI='uice vice area heff hsnow'
+
+listI='Ice_Area IceH_ave IceH_max SnwH_ave Tsrf_ave Tic1_ave Tic2_ave'
+listH='_S _N'
+
+listL='SnwH_ave TotEnerg Tsrf_ave Tgr1_ave Tgr2_ave grdW_ave'
+listZ='_S _T _N'
+
+listAD='Cost AdGrd FDGrd'
+#- with old ADM output:
+#listAD='cost grad'
+listTL='tlCst tlGrd fwGrd'
+
+gMin=16;
+
+if test $flag = 0
+then
+ zz='MON dynstat_'
+ if test $kAd = 1 ; then zz='MON ad_dynstat_' ; fi
+ for yy in $listA
+ do
+  for ss in $listS
+  do
+   xx=${yy}$ss
+   if test $kAd = 1 ; then xx='ad'$xx ; fi
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+fi
+
+if test $flag = 0 -a $kAd = 0
+then
+ zz='MON advcfl_'
+ for yy in $listB
+ do
+   xx='CFL_'$yy
+   comp_1fld "$zz" $yy $xx $fil1 $fil2
+ done
+fi
+
+if test $flag = 0 -a $kAd = 0
+then
+ for xx in $listC
+ do
+#  echo ' ' >> $logfil
+   zz='MON '
+   if test $xx = cg2d -o $xx = cg3d ; then zz=$xx; yy=_init_res ; else yy=$xx ; fi
+   #echo $yy
+   comp_1fld "$zz" $yy $xx $fil1 $fil2
+ done
+fi
+
+if test $flag = 'D'
+then
+ for yy in $listDy
+ do
+  for xx in $listDb
+  do
+   zz=${yy}' .*'$xx
+   comp_1fld "$zz" '=' "${yy}[${xx}]" $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'E' -a $kAd = 0
+then
+ zz='MON exf_'
+ for yy in $listE
+ do
+  for ss in $listS
+  do
+   xx=${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+if test $flag = 'E' -a $kAd = 1
+then
+ zz='MON ad_exf_'
+ for yy in $listE
+ do
+  for ss in $listS
+  do
+   xx='ad'${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'S'
+then
+ zz='MON seaice_'
+ for yy in $listSI
+ do
+  for ss in $listS
+  do
+   xx=${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'I'
+then
+ zz='MON thSI_'
+ for yy in $listI
+ do
+  for ss in $listH
+  do
+   xx=${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'L'
+then
+ zz='MON land_'
+ for yy in $listL
+ do
+  for ss in $listZ
+  do
+   xx=${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'M'
+then
+ listM='StrmIc'
+ zz='STREAMICE_'
+ listN='FP_ERR'
+ for yy in $listM
+ do
+  for ss in $listN
+  do
+   xx=$ss
+   comp_1fld "$zz" $xx $yy $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'ad'
+then
+  zz='  ADM  '
+#- with old ADM output:
+# zz='  ADM  precision_derivative_'
+  echo $fil1 ' output ADM:'
+  grep "$zz" $fil1 | sed "s/.*$zz/ /"
+  echo $fil2 ' output ADM:'
+  grep "$zz" $fil2 | sed "s/.*$zz/ /"
+ for yy in $listAD
+ do
+  case $yy in
+   'Cost') xx='ref_cost_function' ;;
+  'AdGrd') xx='adjoint_gradient' ;;
+  'FDGrd') xx='finite-diff_grad' ;;
+        *) xx=$yy ;;
+  esac
+  for ss in 'result'
+  do
+   comp_1fld "$zz" $xx $yy $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if test $flag = 'tl'
+then
+  zz='  TLM  '
+  echo $fil1 ' output TLM:'
+  grep "$zz" $fil1 | sed "s/.*$zz/ /"
+  echo $fil2 ' output TLM:'
+  grep "$zz" $fil2 | sed "s/.*$zz/ /"
+ for yy in $listTL
+ do
+  case $yy in
+  'tlCst') xx='ref_cost_function' ;;
+  'tlGrd') xx='tangent-lin_grad' ;;
+  'fwGrd') xx='finite-diff_grad' ;;
+        *) xx=$yy ;;
+  esac
+  for ss in 'result'
+  do
+   comp_1fld "$zz" $xx $yy $fil1 $fil2
+  done
+ done
+ echo 'Minimum match= ' $gMin
+ exit
+fi
+
+if [ $flag -ge 1 -a $flag -le 9 ]
+then
+ zz='MON trcstat_'
+ if test $kAd = 1 ; then zz='MON ad_trcstat_' ; fi
+ it=1
+ while [ $it -le $flag ]
+ do
+  yy='ptracer0'$it
+  if test $kAd = 1 ; then yy='ad'$yy ; fi
+  for ss in $listS
+  do
+   xx=${yy}$ss
+   comp_1fld "$zz" $xx $xx $fil1 $fil2
+  done
+  it=`expr $it + 1`
+ done
+fi
+
+echo 'Minimum match= ' $gMin
+exit
