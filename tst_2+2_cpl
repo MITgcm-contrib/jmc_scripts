@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.13 2015/10/25 18:02:14 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.14 2015/12/24 21:29:23 jmc Exp $
 # $Name:  $
 
 rnp_loc()
@@ -269,7 +269,16 @@ xx=`echo $arg1 | sed 's/^r//'`
 if test $xx != $arg1 ; then doRun=1 ; arg1=$xx ; else doRun=0 ; fi
 ksel=$arg1
 
-CMD="./${CMD} $MTH 3"
+if test -x ${CMD} ; then
+  CMD="./${CMD} $MTH 3"
+else
+  if test -x ../../tools/${CMD} ; then
+    CMD="../../tools/${CMD} $MTH 3"
+  else
+    echo " no test-script '${CMD}' found neither here nor in '../../tools/'"
+    exit
+  fi
+fi
 echo " doRun='$doRun' ; ksel='$ksel' ; kUp='$kUp' ; command='$CMD'"
 
 #- set dir of Master-Proc for 3 components (coupler == rank_0):
