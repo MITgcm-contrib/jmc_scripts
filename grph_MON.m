@@ -10,7 +10,7 @@
 %-- set type of monitor output files: ncF=0 : ASCII output file ; ncF=1 : NetCDF file
 ncF=zeros(1,Nexp);
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.2 2022/02/08 17:06:00 jmc Exp $
+% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.3 2022/02/08 17:10:21 jmc Exp $
 % $Name:  $
 
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
@@ -18,6 +18,7 @@ namLg=namA ; namLg=strrep(namLg,'_','\_');
 %-----------
 %- ngEn = Nb of Energy plot: = 2 (ke: Mx+Av) ; = 3 (+AM) or = 4 (add Pe ?) ;
 ngEn=2;
+%- in case PE is missing from Monitor, use Mean-Eta and this "gdH" ratio to get PE
 gdH=9.81/1000 ; % ratio gravity / mean_H (ocean) ; mean_Bo / mean_Pground (atmos)
 %- test if the variable krd is define :
 if size(who('krd'),1) > 0,
@@ -26,6 +27,8 @@ else
  fprintf('krd undefined ; set to 1 \n'); krd=1 ;
 end
 if krd == 1,
+% list_on : controls which field to read-in (and plot):
+%  1 : KE ; 2 : Eta ; 3,4 : T,S ; 5,6 : U,V ; 7 : W ; 8 : CFL ; 9 : Vort ; 10 : "sc"
 %list_on=[1 1 1 1 0 0 1 1 0 0] ;
  list_on=[1 1 1 1 1 1 1 1 0 0] ;
 %list_on=[1 1 0 0 0 0 0 0 1 1] ;
@@ -65,7 +68,7 @@ if krd == 1,
   for n=1:Nexp,
     keA(:,1,n)=etA(:,2,n)-etA(:,1,n);
     ddKe=max(keA(:,4,n));
-     if ddKe > 0, keA(:,3,n)=keA(:,4,n);
+     if ddKe > 0, keA(:,3,n)=keA(:,4,n); %- take PE from Monitor (since it's there)
      else keA(:,3,n)=etA(:,4,n).*etA(:,4,n);
           keA(:,3,n)=keA(:,3,n)*gdH/2; end
     keA(:,4,n)=keA(:,3,n)+keA(:,2,n);
@@ -74,8 +77,10 @@ if krd == 1,
    tt4e=sprintf([tt4e,' %1.1e ;'],keA(1,4,n)); keA(:,4,n)=keA(:,4,n)-keA(1,4,n);
   end
  else tt2e=' ' ; tt3e=' ' ; tt4e=' ' ; end;
- ttA=ttA/3600; titT='hrs' ; ttA=ttA/24; titT='days';
- ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
+ %-- set time units:
+  titT='s'   ;  ttA=ttA/60; titT='mn' ;
+  ttA=ttA/3600; titT='hrs' ;  ttA=ttA/24; titT='days';
+  ttA=ttA/30 ; titT='month';  ttA=ttA/12 ; titT='year';
 end
 %-----------
 
@@ -117,8 +122,9 @@ for ng=1:size(list_on,2)
 %if ng == 3, flag=1*list_on(4) ; titv='Spe.Hum [g/kg]';vvA=smA; end
  if ng == 4, flag=3*list_on(8) ; titv='CFL-max'     ; vvA=cfA ; end
  if ng == 5, flag=1*list_on(2) ; titv='Eta [m]'     ; vvA=etA ; end
+ if ng == 6, flag=1*list_on(7) ; titv='W-vel [m/s]' ; vvA=wmA ; end
 %if ng == 5, flag=1*list_on(2) ; titv='Eta [mb]'; vvA=etA/100 ; end
- if ng == 6, flag=1*list_on(7) ; titv='W-vel [Pa/s]'; vvA=wmA ; end
+%if ng == 6, flag=1*list_on(7) ; titv='W-vel [Pa/s]'; vvA=wmA ; end
  if ng == 7, flag=1*list_on(5) ; titv='U-vel [m/s]' ; vvA=umA ; end
  if ng == 8, flag=1*list_on(6) ; titv='V-vel [m/s]' ; vvA=vmA ; end
  if ng == 9, flag=4*list_on(9) ; titv= 'Vort [s-1]' ; vvA=zmA ; end
@@ -197,10 +203,12 @@ for ng=1:size(list_on,2)
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
       plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      % LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    % set(LL(1),'LineWidth',2);
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     grid ;
     if np == 1, legend(namLg,'Location','best'); end
