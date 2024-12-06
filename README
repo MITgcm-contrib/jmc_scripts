@@ -42,6 +42,10 @@ matlab-script: read_StD.m
 matlab-script: grph_StD.m (uses read_StD.m)
 matlab-script: plot_StD.m (uses read_StD.m, c_levs.m)
 
+NOTE: scripts "extract_StD" & "read_StD.m" have been moved (Feb 12, 2020) 
+to main MITgcm (git) repos, respectively in
+   MITgcm/utils/scripts/  - and -  MITgcm/utils/matlab/
+
 d) script: rn_pickup
 - Rename 'pickup*.ckpt[A,B].*' files to 'pickup*.[10-digits-iter].*'
   with several selection options.
