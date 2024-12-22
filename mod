@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/tst_2+2_cpl,v 1.15 2022/03/17 20:01:59 jmc Exp $
+# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/mod,v 1.1 2023/07/19 14:04:48 jmc Exp $
 # $Name:  $
 
 tmpfil='TTT.'$$
@@ -49,6 +49,8 @@ then
     yy=$?
     if test $yy != '0'
     then
+        #echo " chmod --reference=$xx $tmpfil :"
+        chmod --reference=$xx $tmpfil
         if test $askresp = 'Y'
         then
           echo "Apply changes ? (y/i/s=sav,k=y+keep_date,n=no,e=n+rm) ->" $xx 1>&2
