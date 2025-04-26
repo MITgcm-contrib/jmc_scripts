@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
 
-# $Header: $
-# $Name: $
-
 #listp0='tim cfu cfv cfw cfW keX keA keV peA scT scS scH scE shT shS'
 listp0='tim cfu cfv cfw cfW keX keA peA scT scS'
 listp0="$listp0 amE amU amT"

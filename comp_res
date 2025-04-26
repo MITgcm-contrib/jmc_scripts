@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-# $Header: $
-# $Name:  $
 #set -x
 
 comp_1fld()

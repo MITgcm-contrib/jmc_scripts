@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/derive_other_types,v 1.1 2009/05/11 12:32:37 jmc Exp $
-# $Name:  $
-
 #- This script is intended to help keeping up to date the 4 source files: 
 #  "mdsio_pass_r{4,8}tor{l,s}.F" (same code, just different type R4,R8,RS,RL)
 #  From the 1rst src file (mdsio_pass_r4torl.F), derive the 3 others

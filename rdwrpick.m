@@ -1,9 +1,6 @@
 %- matlab script to write 1 global pickup file from a set of tiled pickup files
 %  to start, type: >> rdwrpick
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/rdwrpick.m,v 1.2 2017/02/10 20:05:34 jmc Exp $
-% $Name:  $
-
 namInp='pickup';
 
  fprintf(' suffix for pickup file: 0=std ; 1=nh ; 2=cd ; 3=seaice ; 4=ice ; 5=pTrs\n');

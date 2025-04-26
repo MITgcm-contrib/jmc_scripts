@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# $Header:  $
-# $Name:  $
-
 #- default:
 prt=1
 action=1

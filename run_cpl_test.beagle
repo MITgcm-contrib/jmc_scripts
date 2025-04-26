@@ -1,8 +1,5 @@
 #! /bin/sh
 
-# $Header: /u/gcmpack/MITgcm/verification/cpl_aim+ocn/run_cpl_test,v 1.17 2010/12/06 02:52:40 jmc Exp $
-# $Name:  $
-
 #- default:
 #Npr=3 ; NpOc=1 ;
  Npr=25; NpOc=12;

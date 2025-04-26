@@ -12,9 +12,6 @@ function [xyP,xyB]=def_subP(n,dxRed,dyRed,dxB,dyB);
 %  axes('position',xyP(j,:)); {make the plot}
 %  BB=colorbar; set(BB,'Position',xyB(j,:));
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/def_subP.m,v 1.1 2014/09/30 22:10:26 jmc Exp $
-% $Name:  $
-
 if nargin < 2, dxRed=0; end
 if nargin < 3, dyRed=0; end
 if nargin < 4, dxB=0.1; end

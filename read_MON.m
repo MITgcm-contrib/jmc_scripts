@@ -7,9 +7,6 @@ function [nit,tt,ke,et,tm,sm,um,vm,wm,cfl,zm,sct] = read_MON(rac_nam,list_on,nre
 % e.g.: list_on=[1 1 0 0 0 0 0 1] => read tt(time), et, ke & cfl
 %-----------------------------------------------------------------
 
-% $Header: $
-% $Name: $
-
 namfil=[rac_nam,'.tim']; D=dir(namfil);
 if size(D,1) == 1,
  fprintf(['read ',namfil]); var=load(namfil);

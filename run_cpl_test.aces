@@ -1,8 +1,5 @@
 #! /bin/sh
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/run_cpl_test.aces,v 1.2 2011/08/01 23:52:33 jmc Exp $
-# $Name:  $
-
 #- default:
  Npr=3 ; NpOc=1 ;
 #Npr=25; NpOc=12;

@@ -1,7 +1,3 @@
-
-% $Header:  $
-% $Name:  $
-
 %- matlab script to test mnc output file: 
 %  use rdmnc to read netcdf output files and print dimensions of fields.
 

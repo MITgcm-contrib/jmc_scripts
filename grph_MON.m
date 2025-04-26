@@ -10,9 +10,6 @@
 %-- set type of monitor output files: ncF=0 : ASCII output file ; ncF=1 : NetCDF file
 ncF=zeros(1,Nexp);
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_MON.m,v 1.3 2022/02/08 17:10:21 jmc Exp $
-% $Name:  $
-
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 namLg=namA ; namLg=strrep(namLg,'_','\_');
 %-----------

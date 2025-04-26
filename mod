@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/mod,v 1.1 2023/07/19 14:04:48 jmc Exp $
-# $Name:  $
-
 tmpfil='TTT.'$$
 if test $# = 0 -o "x$1" = 'x-h' ; then
        echo 'Usage: '`basename $0`' [-s sfile][-b][-f Action] list_of_file_to_process'

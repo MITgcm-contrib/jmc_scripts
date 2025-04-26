@@ -13,9 +13,6 @@
 #         using executable compiled with gfortran (and OpenMPI if using MPI)
 #         and running on /data/ disk(/net/eaps-80-11/data/)
 
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/run_gnu.pbs,v 1.1 2012/10/25 21:17:10 jmc Exp $
-# $Name:  $
-
 sfx=1    # directory suffix
 mpi=0    # number of MPI procs (=0 for non MPI run)
 mth=0    # number of OMP threads (=0 for non Multi-thread run)

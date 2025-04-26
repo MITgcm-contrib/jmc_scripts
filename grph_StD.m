@@ -5,9 +5,6 @@
  Nexp=size(namA,2);
 %-
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/grph_StD.m,v 1.8 2015/09/06 18:15:09 jmc Exp $
-% $Name:  $
-
 nItMx=1e10*ones(1,Nexp); %nItMx(3)=11;
 %nItMx=2400*ones(1,Nexp);
 namLg=namA ; namLg=strrep(namLg,'_','\_');

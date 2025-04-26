@@ -15,9 +15,6 @@ function [nIt,rList,tim,vvA,listV,listK]=read_StD(namF,sufx,listV);
 %  vvA      = 5 dims output array:
 %           ( kLev, time_rec, region_rec, [ave,std,min,max,vol], var_rec )
 
-% $Header: /u/gcmpack/MITgcm_contrib/jmc_script/read_StD.m,v 1.5 2014/05/14 16:53:04 jmc Exp $
-% $Name:  $
-
 %- Remove insignificant whitespace:
 %sufx=strtrim(char(sufx)); % <-- only with matlab-7 or more recent
 sufx=strrep(char(sufx),' ','');

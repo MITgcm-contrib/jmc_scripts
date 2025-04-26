@@ -3,9 +3,6 @@ function [col,mapC]=change_colmap(kchg);
 %   [col,mapC]=change_colmap(-1) :: replace 1rst color with white
 %   [col,mapC]=change_colmap(2)  :: I don't remember ...
 
-% $Header:  $
-% $Name:  $
-
  col=[1:64];
  colormap('default'); mapC=colormap; 
 if kchg == -1,

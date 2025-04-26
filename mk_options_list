@@ -1,7 +1,4 @@
 #! /usr/bin/env bash
-#
-# $Header: /u/gcmpack/MITgcm_contrib/jmc_script/mk_options_list,v 1.1 2012/08/10 21:29:06 jmc Exp $
-# $Name:  $
 
 # generate list of CPP Options used in Fortran source files 
 #                  arguments = list of Fortran source files

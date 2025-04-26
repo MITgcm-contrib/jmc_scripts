@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
 
-# $Header:  $
-# $Name:  $
-
 mkfile='Makefile'
 if [ $# -ge 1 ] ; then
   if test $1 = '-h' ; then

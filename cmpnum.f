@@ -1,5 +1,3 @@
-C $Header: $
-C $Name:  $
       program cmpnum
       implicit none
       real*8 a,b,diff

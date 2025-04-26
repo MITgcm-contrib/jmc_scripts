@@ -1,8 +1,5 @@
 #! /usr/bin/env bash
 
-# $Header: $
-# $Name: $
-
 filnam='std_outp'
 if test $# = 0
 then
