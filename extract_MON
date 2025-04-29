@@ -17,7 +17,7 @@ fi
 #----------------------------------------------------------
 touch $output $tmpfil
 sed -n '/%MON/p' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
-#egrep '%MON|cg2d_init_res' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
+#grep -E '%MON|cg2d_init_res' $1 | sed 's/(PID\.TID 000.\.000.) //g' >> $tmpfil
 
 if test $n1 = 0
 then

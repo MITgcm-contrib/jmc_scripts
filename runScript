@@ -12,7 +12,7 @@
 #PBS -l nodes=4:p4
 #
 # o Where to write output
-# #PBS -e TTT.err 
+# #PBS -e TTT.err
 
 # #PBS -o TTT.out
 
@@ -35,7 +35,7 @@ set partmn=25
 set prc2='N'
 cd $runDir
 
-set its=`egrep 'nIter0' data | sed 's/ nIter0=//'| sed 's/,$//'`
+set its=`grep 'nIter0' data | sed 's/ nIter0=//'| sed 's/,$//'`
 set nms=`expr $its / $nit1mn`
 set nMs = `printf "%3.3i\n" $nms`
 set nme=`expr $nms + $partmn`
@@ -99,7 +99,7 @@ echo 'end with status' $out
 
 if ( $out != 0 ) then
  echo 'bad return status => STOP here'
-else 
+else
 #mv std_outp std_outp.$nMe
  cp -p run_here std_outp.$nMe
  echo ' ' >> std_outp.$nMe

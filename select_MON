@@ -11,7 +11,7 @@ listp4='Tim ldE lSn ldW lTS lT1 lT2'
 listp5='tiTr t1_ t2_ ... t#_ '
 #----------------------------------------------------------
 # to reduce the size of the output file, keeping the MONITOR output :
-# egrep '%MON' std_outp.100y | sed 's/(PID.TID 0000.0001) //g' > outp.100y
+# grep '%MON' std_outp.100y | sed 's/(PID.TID 0000.0001) //g' > outp.100y
 #----------------------------------------------------------
 if [ $# -le 1 ]
 then
@@ -97,9 +97,9 @@ do
    echo ' '$rac.$ppx '<== Select string= "'$var'"'
   #if test $ppy = 'scT' -o $ppy = 'scS' -o $ppy = 'scH' -o $ppy = 'scE'
   #then echo '0.' > $rac.$ppx ;
-  #  egrep "MON $var" $file | sed "s/.* *=//g" >> $rac.$ppx
+  #  grep "MON $var" $file | sed "s/.* *=//g" >> $rac.$ppx
   #else
-     egrep "MON $var" $file | sed "s/.* *=//g"  > $rac.$ppx
+     grep "MON $var" $file | sed "s/.* *=//g"  > $rac.$ppx
      if test ! -s $rac.$ppx ; then rm -f $rac.$ppx ; fi
   #fi
  fi
@@ -170,7 +170,7 @@ do
      var=dynstat_$var
     fi
     echo ' '$rac.$ppx '<== Select string= "'$var'"'
-    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+    grep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
    fi
   done
  fi
@@ -213,7 +213,7 @@ listp2='tsice siu_ siv_ sia_ sih_ snw_'
   var='seaice_time_sec' ;
   nn=`grep -c "MON $var" $file`
   echo ' '$rac.$pp '<== Select string= "'$var'"'
-  egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
+  grep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
  elif test $pp != 0 ; then
   case $ppy in
    'siu_') vv='uice' ;;
@@ -237,7 +237,7 @@ listp2='tsice siu_ siv_ sia_ sih_ snw_'
     esac
     var=seaice_$var
     echo ' '$rac.$ppx '<== Select string= "'$var'"'
-    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+    grep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
    fi
   done
  fi
@@ -293,7 +293,7 @@ do
      if test $zz = 'Ic' ; then ppx='i_tim' ; else ppx=$pp$zz$xx ; fi
      var=thSI_$var
      echo ' '$rac.$ppx '<== Select string= "'$var'"'
-     egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+     grep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
     done
    done
  fi
@@ -346,7 +346,7 @@ do
      if test $zz = 'l_' ; then ppx='l_tim' ; else ppx=$pp$zz$xx ; fi
      var=land_$var
      echo ' '$rac.$ppx '<== Select string= "'$var'"'
-     egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+     grep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
     done
    done
  fi
@@ -388,7 +388,7 @@ do
   nn=`grep -c "MON $var" $file`
   if test $nn = 0 ; then var='time_secondsf' ; fi
   echo ' '$rac.$pp '<== Select string= "'$var'"'
-  egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
+  grep "MON $var" $file | sed "s/.* *=//g" > $rac.$pp
  elif test $pp != 0 ; then
   vv=`echo $ppy | sed 's/^t/ptracer0/'`
 # echo " vv='$vv'"
@@ -407,7 +407,7 @@ do
     esac
     var=trcstat_$var
     echo ' '$rac.$ppx '<== Select string= "'$var'"'
-    egrep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
+    grep "MON $var" $file | sed "s/.* *=//g" > $rac.$ppx
    fi
   done
  fi

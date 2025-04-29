@@ -7,8 +7,8 @@ comp_1fld()
    # comp_1fld select_string select_var print_var file_1 file_2
    echo ' ' >> $logfil
    uu="$1$2"
-   egrep "${uu}" $4 | sed 's/.*=//' | nl > tmp1.txt
-   egrep "${uu}" $5 | sed 's/.*=//' | nl > tmp2.txt
+   grep "${uu}" $4 | sed 's/.*=//' | nl > tmp1.txt
+   grep "${uu}" $5 | sed 's/.*=//' | nl > tmp2.txt
    if test -s tmp1.txt ; then nl1=`sed -n '$=' tmp1.txt` ; else nl1=0 ; fi
    if test -s tmp2.txt ; then nl2=`sed -n '$=' tmp2.txt` ; else nl2=0 ; fi
    if [ $nl1 -ne $nl2 ] ; then
@@ -24,7 +24,7 @@ comp_1fld()
    else
      join tmp1.txt tmp2.txt > tmp3.txt
      cmp=`$compex < tmp3.txt 2> tmp4.txt`
-     err=`egrep -c ' error ' tmp4.txt`
+     err=`grep -c ' error ' tmp4.txt`
      if [ $err -ge 1 ] ; then
        echo $cmp $3 ':' $compex 'gives' $err 'error(s)'
        echo $cmp $3 ':' $compex 'gives' $err 'error(s)' >> $logfil

@@ -222,10 +222,11 @@ dir3=res_1iB
 #- get number of procs from file "pr_group":
 if test -f pr_group ; then
  Npr=`cat pr_group | wc -l`
- NpOc=`grep -c '\/build_ocn\/mitgcmuv' pr_group`
+ NpOc=`grep -c '/build_ocn/mitgcmuv' pr_group`
 else echo " file: 'pr_group' not found"
  Npr=0
 fi
+#echo "debug: > Npr= $Npr ; NpOc= $NpOc <"
 
 #- parse options:
 CMD='run_cpl_test'
@@ -317,7 +318,7 @@ if test $ksel = 0 ; then
  Dbl=`expr $NiOc + $NiOc`
  cp -p rank_$rnkO/data.tst rank_$rnkO/data
  cp -p rank_$rnkA/data.tst rank_$rnkA/data
- egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
+ grep -E 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #----------------------------------------------------------------------
@@ -418,7 +419,7 @@ if [ $ksel -eq 1 -o $kUp -le 1 ] ; then
  nit=$NiAt ; Dbl=`expr $nit + $nit`
  pFile=rank_$rnkA/data
  sed "s/^ nTimeSteps=$Dbl/ nTimeSteps=$nit/g" $pFile.tst > $pFile
- egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
+ grep -E 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #-- run & post-process 1iA:
@@ -477,7 +478,7 @@ if [ $ksel -eq 2 -o $kUp -le 2 ] ; then
  sed "s/^ nIter0=$nat0/ nIter0=$nat1/g" data > data.tmp_$$
  mv -f data.tmp_$$ data
  cd ..
- egrep 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
+ grep -E 'nIter0|nTimeSteps' rank_$rnkO/data rank_$rnkA/data
 fi
 
 #-- run & post-process 1iB:
