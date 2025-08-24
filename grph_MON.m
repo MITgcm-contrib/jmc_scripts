@@ -28,6 +28,7 @@ if krd == 1,
 %  1 : KE ; 2 : Eta ; 3,4 : T,S ; 5,6 : U,V ; 7 : W ; 8 : CFL ; 9 : Vort ; 10 : "sc"
 %list_on=[1 1 1 1 0 0 1 1 0 0] ;
  list_on=[1 1 1 1 1 1 1 1 0 0] ;
+%list_on=[1 1 0 0 1 0 1 1 0 0] ; %-- skip T,S,V
 %list_on=[1 1 0 0 0 0 0 0 1 1] ;
 %- Warning: list_log works with fig # and do not match list_on !
 %list_log=zeros(1,length(list_on));
@@ -39,9 +40,10 @@ if krd == 1,
    [ntA(n),ttA(:,n),keA(:,:,n),etA(:,:,n),tmA(:,:,n),smA(:,:,n), ...
        umA(:,:,n),vmA(:,:,n),wmA(:,:,n),cfA(:,:,n),zmA(:,:,n),scA(:,:,n)] = ...
      readnc_MON(char(namA(n)),list_on);
+     StD=1;
   else
    [ntA(n),ttA(:,n),keA(:,:,n),etA(:,:,n),tmA(:,:,n),smA(:,:,n), ...
-       umA(:,:,n),vmA(:,:,n),wmA(:,:,n),cfA(:,:,n),zmA(:,:,n),scA(:,:,n)] = ...
+       umA(:,:,n),vmA(:,:,n),wmA(:,:,n),cfA(:,:,n),zmA(:,:,n),scA(:,:,n),StD] = ...
      read_MON(char(namA(n)),list_on);
   end
   nrec=ntA(1);
@@ -76,8 +78,8 @@ if krd == 1,
  else tt2e=' ' ; tt3e=' ' ; tt4e=' ' ; end;
  %-- set time units:
   titT='s'   ;  ttA=ttA/60; titT='mn' ;
-  ttA=ttA/3600; titT='hrs' ;  ttA=ttA/24; titT='days';
-  ttA=ttA/30 ; titT='month';  ttA=ttA/12 ; titT='year';
+  ttA=ttA/60 ; titT='hrs' ;  ttA=ttA/24; titT='days';
+  ttA=ttA/30 ; titT='month'; ttA=ttA/12 ; titT='year';
 end
 %-----------
 
@@ -95,8 +97,9 @@ end;
 
 isA=ones(1,Nexp); ieA=ntA ;
 %- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500)
-%isA=isA*31 ; % drop the 1rst mnth
+%isA=isA*4 ; % drop the first 3 records (--> 30.mn if Freq=10.mn)
 %ieA(1)=1681; ieA(2)=281;
+%ieA=ones(1,Nexp)*min(ntA);
 
 linA={'k-','b-','r-','g-','m-','c-'};
 %linA={'k-','k--','b-','r-','g-','m-','c-'};
@@ -106,9 +109,12 @@ ieA=min(ieA,nItMx);
  titall='S.Ocean Section (320x50), CORE Forcing' ;
 %titall='Enceladus with Ice, Lat-Lon half-sphere' ;
 
+if StD == 1, titStD='Std-Dev'; else titStD='Del-2'; end
+% fprintf(' StD= %i , 4th var to plot: "%s"\n',StD,titStD);
 %=========================================================
-ng=0; fxb=100; fyb=60; fsc=1.5;
-%fxb=-2600; %fyb=160;
+ng=0; fxb=100; fyb=60; fdx=100; fdy=40; fsc=1.;
+  fyb= 30;  fxb= 50;   fdy=30; fsc=1.;
+% fyb= 160; fxb=-2600; fdy=60; fsc=1.5;
 
 for ng=1:size(list_on,2)
 %-------------------
@@ -128,7 +134,7 @@ for ng=1:size(list_on,2)
 
  if flag == 1
 %--
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng [500 700]*fsc]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
   dd=squeeze(max(vvA)-min(vvA)); av=squeeze(mean(vvA));
    if Nexp == 1, av=av'; dd=dd'; end ;
   for nv=1:4,
@@ -154,8 +160,7 @@ for ng=1:size(list_on,2)
                 legend(namLg,'Location','best'); end
     if nv == 2, title(['Max ',titv,'  ',ttav]); end
     if nv == 3, title(['Avr ',titv,'  ',ttmn]); end
-    if nv == 4, title(['Std-Dev ',titv,'  ',ttav]); end
-   %if nv == 4, title(['Del-2 ',titv,'  ',ttav]); end
+    if nv == 4, title([titStD,' ',titv,'  ',ttav]); end
     if length(ttyax) > 0, ylabel(ttyax); end
   end ; xlabel(titT);
 %--
@@ -171,9 +176,9 @@ for ng=1:size(list_on,2)
  ngEx = ngEn ; if ngEn == 3, ngEx = 4; end ; ngEk = ngEx;
  if list_on(10) == 1, ngEx = 4; ngEk = 2; end
  if ngEx == 4,
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng [500 700]*fsc]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
  else
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+140*ng [500 500]*fsc]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+140*ng [500 500]*fsc]);clf;
  end;
   dd=squeeze(max(vvA)-min(vvA)); av=squeeze(mean(vvA));
    if Nexp == 1, av=av'; dd=dd'; end ;
@@ -266,7 +271,7 @@ for ng=1:size(list_on,2)
 
  if flag == 3
 %--
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng [500 700]*fsc]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
   dd=squeeze(max(vvA)-min(vvA)); av=squeeze(mean(vvA));
   if Nexp == 1, av=av'; dd=dd'; end
   for nv=1:4,
@@ -309,7 +314,7 @@ for ng=1:size(list_on,2)
 %   vvA(:,3,n)=vvA(:,3,n)-vvA(1,3,n); end
 % tt4i=' (+) '; for n=1:Nexp, tt4i=sprintf([tt4i,' %1.1e ;'],vvA(1,4,n));
 %   vvA(:,4,n)=vvA(:,4,n)-vvA(1,4,n); end
-  figure(ng); set(ng,'position',[fxb+100*ng fyb+40*ng [500 700]*fsc]);clf;
+  figure(ng); set(ng,'position',[fxb+fdx*ng fyb+fdy*ng [500 700]*fsc]);clf;
   dd=squeeze(max(vvA)-min(vvA)); av=squeeze(mean(vvA));
   if Nexp == 1, av=av'; dd=dd'; end
 % for nv=1:6, subplot(610+nv);

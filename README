@@ -42,7 +42,7 @@ matlab-script: read_StD.m
 matlab-script: grph_StD.m (uses read_StD.m)
 matlab-script: plot_StD.m (uses read_StD.m, c_levs.m)
 
-NOTE: scripts "extract_StD" & "read_StD.m" have been moved (Feb 12, 2020) 
+NOTE: scripts "extract_StD" & "read_StD.m" have been moved (Feb 12, 2020)
 to main MITgcm (git) repos, respectively in
    MITgcm/utils/scripts/  - and -  MITgcm/utils/matlab/
 
@@ -82,7 +82,7 @@ a) shell script: select_MON
 
 b) shell scripts: do_extract_MON & extract_MON
  collect into a single file all MONITOR output from consecutive
- STDOUT output files (from a single experiment with one of more restart)
+ STDOUT output files (from a single experiment with one or more restart)
 
 c) matlab script: grph_MON.m
  plot MONITOR time-serie of one or more experiment (with lines of different
