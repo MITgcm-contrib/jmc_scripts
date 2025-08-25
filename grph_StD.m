@@ -87,26 +87,23 @@ nbG=min(nbG,nbV); list_on(1:nbG)=1 ;
 
 isA=ones(1,Nexp); ieA=ntA;
 %- limit the length : for search of isA <->1500y: find(ttA(:,2) == 1500)
-%isA=isA*31 ; % drop the 1rst mnth (1 Monitor/d)
-isA=isA*2 ; % drop the 1rst mnth (1 Monitor/30d)
-%isA(1)=31 ; isA(2)=4 ; % drop the 1rst mnth
-%ieA(:)=240; %isA(:)=1;
+%isA=isA*31 ; %% drop the first 30 records (--> 30 days if Freq=1.day)
+%ieA(:)=240; %isA(:)=4;
+%ieA=ones(1,Nexp)*min(ntA);
 
-linA(1,:)='k-'; % ieA(1)=60 ; % ieA(1)=1152 ;
-linA(2,:)='b-';
-linA(3,:)='r-';
-linA(4,:)='g-';
-linA(5,:)='m-';
-linA(6,:)='c-';
+lThick=0; %- default line thickness
+linA={'k-','b-','r-','g-','m-','c-'};
+% lThick=1.5;
 
 ieA=min(ieA,nItMx);
 %titall='AIM , Cubic-G (32x32) , cpl-FM Forcing' ;
-titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
-%titall='Dyncore test-case 5 (cs-32)' ;
+ titall='Global Ocean, Cubic-G (32x32) , CORE Forc (2)' ;
+%titall='Tut Baroclinic Gyre (1.deg)' ;
 
 %=========================================================
 ng=0; fxb=100; fyb=60; fdx=100; fdy=40; fsc=1.;
-%fyb=-360; fxb=-2600; fdy=60; fsc=1.5;
+  fyb= 30;  fxb= 50;   fdy=30; fsc=1.;
+% fyb= 160; fxb=-2600; fdy=60; fsc=1.5;
 
 for jv=1:nbV,
 %-------------------
@@ -136,11 +133,12 @@ for jv=1:nbV,
   for nv=1:4,
     subplot(410+nv); ttmn=' Mx-mn:'; ttav=' Av:';
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),nv,n),linA(n,:));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),nv,n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     AA=axis ; dAA=AA(4)-AA(3);
     if AA(3)*AA(4) <= 0, AA(3)=min(AA(3),-dAA/10); AA(4)=max(AA(4),dAA/10); end
     if ttax1 < ttax2, AA(1)=ttax1; AA(2)=ttax2; end;

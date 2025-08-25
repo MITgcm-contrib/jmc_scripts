@@ -101,13 +101,15 @@ isA=ones(1,Nexp); ieA=ntA ;
 %ieA(1)=1681; ieA(2)=281;
 %ieA=ones(1,Nexp)*min(ntA);
 
+lThick=0; %- default line thickness
 linA={'k-','b-','r-','g-','m-','c-'};
 %linA={'k-','k--','b-','r-','g-','m-','c-'};
+%linA={'k-','b-','r--','g-','m-','c-'}; lThick=2;
 
 ieA=min(ieA,nItMx);
 %titall='AIM , Cubic-G (32x32) , NCEP Forc (2)' ;
  titall='S.Ocean Section (320x50), CORE Forcing' ;
-%titall='Enceladus with Ice, Lat-Lon half-sphere' ;
+%titall='Tut Baroclinic Gyre (1.deg)' ;
 
 if StD == 1, titStD='Std-Dev'; else titStD='Del-2'; end
 % fprintf(' StD= %i , 4th var to plot: "%s"\n',StD,titStD);
@@ -146,11 +148,12 @@ for ng=1:size(list_on,2)
       end
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     AA=axis ; dAA=AA(4)-AA(3);
     if AA(3)*AA(4) <= 0, AA(3)=min(AA(3),-dAA/10); AA(4)=max(AA(4),dAA/10); end
@@ -204,13 +207,12 @@ for ng=1:size(list_on,2)
       end
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
-      % LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
-    % set(LL(1),'LineWidth',2);
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     grid ;
     if np == 1, legend(namLg,'Location','best'); end
@@ -245,11 +247,12 @@ for ng=1:size(list_on,2)
       end
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     grid ;
    %title(['mean ',titv1,titv2]);
@@ -283,11 +286,12 @@ for ng=1:size(list_on,2)
       end
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     if ttay(ng,1) < ttay(ng,2), AA=axis; AA(3)=max(AA(3),ttay(ng,1));
                                 AA(4)=min(AA(4),ttay(ng,2)); axis(AA); end;
@@ -328,11 +332,12 @@ for ng=1:size(list_on,2)
       end
     else var=squeeze(vvA(:,nv,:)); end
     for n=1:Nexp,
-      plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
+      LL(n)=plot(ttA(isA(n):ieA(n),n),var(isA(n):ieA(n),n),char(linA(n)));
       if n == 1, hold on ; end ;
       ttmn=sprintf([ttmn,' %2.1e ;'],dd(nv,n));
       ttav=sprintf([ttav,' %3.2e ;'],av(nv,n));
     end ; hold off ;
+    if lThick > 0, set(LL,'LineWidth',lThick); end
     if ttax1 < ttax2, AA=axis; axis([ttax1 ttax2 AA(3:4)]); end;
     grid ;
     if nv == 1, title(['min R.',titv,'  ',ttav]); end
