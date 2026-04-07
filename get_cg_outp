@@ -1,0 +1,106 @@
+#! /usr/bin/env bash
+
+usage()
+{
+  echo 'Usage:' `basename $0` "[+][k] STDOUT-file"
+  echo ' --> : get CG output from STDOUT-file printed to screen'
+  echo '   k : keep original sequence'
+  echo '   + : including RHS Sum & Max'
+  echo '  +k : keep original sequence with RHS Sum & Max'
+  exit 1
+}
+
+# w_rsh:  =0 -> does not select RHS Sum & Max
+#         =1 -> also print RHS Sum & Max lines
+# keepSq: =0 -> print all reccord of each CG var together, 1 var after the other
+#         =1 -> keep original order, all CG vars together, 1 reccord after the other
+
+#-- default:
+w_rsh=0 ; keepSq=0
+
+#-- process argments:
+if [ $# -eq 0 ] ; then usage ; fi
+if test $1 = '+' ; then
+  # including RHS Sum & Max (at each time-steps !)
+  w_rsh=1 ; shift
+fi
+if test $1 = 'k' ; then
+  keepSq=1 ; shift
+fi
+if test $1 = '+k' ; then
+  keepSq=1 ;  w_rsh=1 ; shift
+fi
+if [ $# -eq 0 ] ; then usage ; fi
+
+if test -f $1 ; then
+  inpF=$1
+else
+  echo "==> Error: file '$1' not found"
+  usage
+fi
+
+if [ $keepSq -eq 0 ] ; then
+#-------------------------------------------------------------------------------
+#-- print all reccord of each CG var together, 1 var after the other
+
+ cg2d=`grep -c ' cg2d_iters' $inpF`
+ cg3d=`grep -c ' cg3d_iters' $inpF`
+
+ if [ $cg2d -ge 1 ] ; then
+  echo "-- cg2d summary from file: $inpF"
+  grep ' cg2d_iters' $inpF
+  echo ''
+  grep ' cg2d_init_res' $inpF
+  echo ''
+  grep ' cg2d_last_res' $inpF
+  echo ''
+  if [ $w_rsh -eq 1 ] ; then
+   grep ' cg2d: Sum' $inpF
+   echo ''
+  fi
+ fi
+
+ if [ $cg3d -ge 1 ] ; then
+  echo "-- cg3d summary from file: $inpF"
+  grep ' cg3d_iters' $inpF
+  echo ''
+  grep ' cg3d_init_res' $inpF
+  echo ''
+  grep ' cg3d_last_res' $inpF
+  echo ''
+  if [ $w_rsh -eq 1 ] ; then
+   grep ' cg3d: Sum' $inpF
+   echo ''
+  fi
+ fi
+
+else
+#-------------------------------------------------------------------------------
+#-- keep original order, all CG vars together, 1 reccord after the other
+#-  note: this was former "select_cg2d" script
+
+# typ: = 1 : print both both cg2d & cg3d
+# typ: = 2 : only cg2d output   ;   typ: = 3 : only cg3d output
+ typ=1
+
+ if [ $w_rsh -eq 0 ] ; then
+  if [ $typ -eq 1 ] ; then
+   #grep -E '      cg2d_|      cg3d_' $inpF
+    grep -E '      cg2d_|      cg3d_' $inpF | sed 's/^(PID.TID 0...\.0001) //'
+  else
+   #grep "      cg${typ}d_" $inpF
+    grep "      cg${typ}d_" $inpF | sed 's/^(PID.TID 0...\.0001) //'
+  fi
+ else
+  if [ $typ -eq 1 ] ; then
+   #grep -E '^ cg2d: |      cg2d_|^ cg3d: |      cg3d_' $inpF
+    grep -E '^ cg2d: |      cg2d_|^ cg3d: |      cg3d_' $inpF | sed 's/^(PID.TID 0...\.0001) //'
+  else
+   #grep -E "^ cg${typ}d: |      cg${typ}d_" $inpF
+    grep -E "^ cg${typ}d: |      cg${typ}d_" $inpF | sed 's/^(PID.TID 0...\.0001) //'
+  fi
+ fi
+
+#-------------------------------------------------------------------------------
+fi
+exit 0

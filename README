@@ -74,7 +74,7 @@ i) script: mod
 
 ----------------------------------------------------------------------
 shell & matlab scripts to process MONITOR output from STDOUT files
- and make simple time-serie plots:
+ and make simple time-series plots:
 --------------------
 a) shell script: select_MON
  get all MONITOR output from a single file and split into many
@@ -85,9 +85,31 @@ b) shell scripts: do_extract_MON & extract_MON
  STDOUT output files (from a single experiment with one or more restart)
 
 c) matlab script: grph_MON.m
- plot MONITOR time-serie of one or more experiment (with lines of different
+ plot MONITOR time-series of one or more experiment (with lines of different
  color). Note: experiment with larger number of records needs to come first.
 Uses: read_MON.m
  to load-in single-variable output files (--> many files per experiment)
 and/or: readnc_MON.m
  to load-in netcdf (MNC) MONITOR output files
+
+----------------------------------------------------------------------
+shell & matlab scripts to process CG2D & CG3D output from STDOUT files
+ and make simple time-series plots:
+--------------------
+a) shell script: get_cg_outp
+  from STDOUT, get CG output printed to screen, either (option "k") in original
+  sequence or (default) sorted by variable (Iter, initial and last Residual)
+
+b) shell script: get_cg_stats
+  get CG statistics from STDOUT and output 1 file per variable ;
+  this enable to plot time-series, e.g., using following matlab scripts.
+  Note: internal function "get_parms_fr_StdOut" inside "get_cg_stats" could
+        easily be taken out as a stand alone script and used to extract
+        a different set of parameters.
+
+c) matlab script: grph_cg.m
+ plot CG stats time-series of one or more experiment (with lines of different
+ color); read-in 1 file per variable and per experiment (output of
+ "get_cg_stats" processing).
+Uses: load_parms.m
+ to load-in short parameter-output file into a matlab structure.

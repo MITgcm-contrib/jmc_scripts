@@ -1,0 +1,93 @@
+#! /usr/bin/env bash
+
+usage()
+{
+  echo 'Usage:' `basename $0` 'STDOUT-file output-prefix'
+  echo ' --> get CG stats from "STDOUT-file" and output 1 file per variable,'
+  echo '     with output-files "output-prefix".{suffix} and suffix in:'
+  echo '    parms  : few relevant model parameters (from Summary outp)'
+  echo '    Iter   : model Iteration number (from MONITOR outp)'
+  echo '   cg{X}Mx : rhsMax, X=2,3 for 2D,3D solver respectively'
+  echo '   cg{X}it : number of CG iterations, X=2,3'
+  echo '   iRes{X} : initial CG Residual,     X=2,3'
+  echo '   lRes{X} :   last  CG Residual,     X=2,3'
+}
+
+get_parms_fr_StdOut()
+{
+    # get_parms_fr_StdOut  STDOUT-File  Params_List  Outp_File
+    #
+    # from MITgcm "STDOUT-File", get parameter setting for any params in "Params_List"
+    #      and report parameter and its value to "Outp_File"
+
+    # stdoutF=$1 ; listPar=$2
+    parOutF=$3
+
+    rm -f $parOutF
+    for pp in $2 ; do
+      in=`grep -c '^(PID.TID 0...\.0001) * '${pp}' *=' $1`
+      # echo " --- pp= '$pp' ; in=$in :"
+      if [ $in -eq 1 ] ; then
+        ( grep -A1 '^(PID.TID 0...\.0001) * '${pp}' *=' $1 \
+          | sed -e 's/^(PID.TID 0...\.0001) */ /' -e 's/ *\/\*.*\*\///' \
+          | tr '\n' ' ' ; echo ';' ) >> $parOutF
+      fi
+    done
+}
+
+if [ $# -ne 2 ] ; then
+  usage ; exit 1
+fi
+inpF=$1
+pfx=$2
+if test -f $inpF ; then
+  echo -n " processing file '$inpF',"
+else
+  echo "ERROR: file '$inpF' not found"
+  usage ; exit 2
+fi
+
+#-- get info from Summary: 1) get switch "do3D" ; 2) get value of few params
+do3D=`grep -A1 ' use3Dsolver = ' $inpF | tail -n 1 | sed 's/^(PID.TID 0...\.0001) *//'`
+ echo " do3D= $do3D"
+
+#-  list of parameters to extract:
+ listP="deltaTClock rigidLid exactConserv solveForDeltaP use3Dsolver"
+ listP="$listP cg2dMaxIters cg2dTargetResWunit"
+ listP="$listP cg3dMaxIters cg3dTargetResWunit selectNHfreeSurf"
+
+ outF="$pfx.parms"
+ get_parms_fr_StdOut $inpF "$listP" $pfx.parms
+
+#-- Monitor Iter:
+ outF="$outF $pfx.Iter"
+ grep ' %MON time_tsnumber ' $inpF | sed 's/^(PID.TID 0...\.0001) .*= *//' > $pfx.Iter
+
+#-- cg2d : rshMax, Iters :
+ outF="$outF $pfx.cg2Mx $pfx.cg2it"
+ grep '^ cg2d: ' $inpF | sed 's/ cg2d.*E...  / /' > $pfx.cg2Mx
+#grep '      cg2d_iters' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//' > $pfx.cg2it
+ grep '      cg2d_iters' $inpF  | sed 's/^(PID.TID 0...\.0001) .*=//' | awk '{print $2}' > $pfx.cg2it
+
+#-  cg2d ini & last Residual:
+ outF="$outF $pfx.iRes2 $pfx.lRes2"
+ grep '      cg2d_init_res' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//'  > $pfx.iRes2
+ grep '      cg2d_last_res' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//'  > $pfx.lRes2
+ grep '      cg2d_min_res'  $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//'  > $pfx.mRes2
+ if test -s  $pfx.mRes2 ; then outF="$outF $pfx.mRes2" ; else rm -f $pfx.mRes2 ; fi
+
+if test "x$do3D" = xT ; then
+
+#-- cg3d : rshMax, Iters :
+ outF="$outF $pfx.cg3Mx $pfx.cg3it"
+ grep '^ cg3d: ' $inpF | sed 's/ cg3d.*E...  / /' > $pfx.cg3Mx
+ grep '      cg3d_iters' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//' > $pfx.cg3it
+
+#-  cg3d ini & last Residual:
+ outF="$outF $pfx.iRes3 $pfx.lRes3"
+ grep '      cg3d_init_res' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//'  > $pfx.iRes3
+ grep '      cg3d_last_res' $inpF  | sed 's/^(PID.TID 0...\.0001) .*= *//'  > $pfx.lRes3
+
+fi
+
+ls -l $outF
