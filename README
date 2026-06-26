@@ -72,6 +72,10 @@ i) script: mod
   to perform automatic substitution (useful to maintain src code) using
   command "sed" and set of rules from file (default rule file: "mod.sed")
 
+j) script: switch_cont_line
+  generate (output) fortran free-format compatible version of a fortran fixed
+  format MITgcm header file (input), dealing with continuation line and comments
+
 ----------------------------------------------------------------------
 shell & matlab scripts to process MONITOR output from STDOUT files
  and make simple time-series plots:

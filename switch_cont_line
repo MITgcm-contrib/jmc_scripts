@@ -1,0 +1,29 @@
+#! /usr/bin/env bash
+
+#- change Fixed-format continuation-line ("&" in 6th column) in fortran header file
+#  to Free-format  continuation-line ("&" at the end of the line to continue).
+#  first argument             :: input fortran fixed-format header file
+#  second argument (optional) :: output fortran free-format header file
+
+fix=$1
+if [ $# -gt 1 ]; then outp=$2 ; else outp=${fix}'.free_form' ; fi
+
+# linNum=`grep -n '^     [I,O,U,&]' $fix | cut -d ':' -f 1`
+  linNum=`grep -n '^     &' $fix | cut -d ':' -f 1 | awk '{print $1 - 1}'`
+# linNum=`grep -n '^     &' $fix | cut -d ':' -f 1 | awk '{print $1 - 1}' | tr '\n' ','`
+#echo "linNum='$linNum'"
+
+#tmpFil=`basename $0`.$$
+ tmpFil='/tmp/'`basename $0`.$$
+#echo "tmpFil='$tmpFil'"
+
+ for xx in $linNum
+ do
+   echo ${xx}'s/.$/& \&/' >> $tmpFil
+ done
+#sed -f $tmpFil $fix > $outp
+ sed -f $tmpFil $fix | sed -e 's/^     &/      /' -e 's/^c/!/' -e 's/^C/!/' > $outp
+ rm -f $tmpFil
+
+exit
+
